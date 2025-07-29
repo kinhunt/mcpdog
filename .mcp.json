@@ -1,0 +1,12 @@
+{   
+"mcpServers": {
+         "mcp-gateway": {
+           "command": "node",
+           "args": [
+     "dist/index.js"
+           ],
+           "cwd": "/Users/qiujianheng/Documents/dev/mcp-gateway"
+         }
+       }
+     }
+
