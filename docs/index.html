@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCPDog - Your MCP Service Discovery Companion</title>
+    <meta name="description" content="MCPDog helps you discover, curate, and manage Model Context Protocol (MCP) services with smart search and personal collections.">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="MCPDog - Your MCP Service Discovery Companion">
+    <meta property="og:description" content="Smart discovery and curation for Model Context Protocol services">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kinhunt.github.io/mcpdog/">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐕</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .logo .emoji {
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Problem Section */
+        .problem-section {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .problem-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 4px solid #e74c3c;
+            transition: transform 0.3s ease;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .problem-card h3 {
+            color: #e74c3c;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .solution-card {
+            background: linear-gradient(135deg, #667eea, #a8b5ff);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .solution-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .solution-card h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Features Section */
+        .features-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .demo-code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .demo-code .comment {
+            color: #68d391;
+        }
+
+        .demo-code .string {
+            color: #f6e05e;
+        }
+
+        .demo-code .function {
+            color: #63b3ed;
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .footer-section a {
+            color: #cbd5e0;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #667eea;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #4a5568;
+            padding-top: 2rem;
+            color: #a0aec0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    <span class="emoji">🐕</span>
+                    MCPDog
+                </a>
+                <div class="nav-buttons">
+                    <a href="https://github.com/kinhunt/mcpdog" class="btn btn-secondary" target="_blank">
+                        📖 Documentation
+                    </a>
+                    <a href="https://github.com/kinhunt/mcpdog" class="btn btn-primary" target="_blank">
+                        ⭐ Star on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="fade-in-up">MCPDog 🐕</h1>
+            <p class="subtitle fade-in-up">Your loyal companion for discovering and fetching MCP services</p>
+            <p class="hero-description fade-in-up">
+                Stop hunting through scattered repositories! MCPDog sniffs out the perfect Model Context Protocol services for your needs and fetches them directly to your toolbox.
+            </p>
+            <div class="hero-buttons fade-in-up">
+                <a href="https://github.com/kinhunt/mcpdog" class="btn btn-primary btn-large" target="_blank">
+                    🚀 Get Started
+                </a>
+                <a href="#demo" class="btn btn-secondary btn-large">
+                    🎮 See Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem & Solution Section -->
+    <section class="problem-section">
+        <div class="container">
+            <h2 class="section-title">🤔 The Problem MCPDog Solves</h2>
+            
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <h3>🔍 Hard to Find Services</h3>
+                    <p>No central discovery mechanism for MCP services. Users waste time searching through GitHub repositories and documentation.</p>
+                </div>
+                <div class="problem-card">
+                    <h3>🧩 Complex Configuration</h3>
+                    <p>Each service requires individual setup and configuration. No unified way to manage multiple services.</p>
+                </div>
+                <div class="problem-card">
+                    <h3>📚 Scattered Documentation</h3>
+                    <p>Service information spread across different repositories. Hard to compare and evaluate options.</p>
+                </div>
+                <div class="problem-card">
+                    <h3>🔄 Manual Management</h3>
+                    <p>No way to curate and organize your favorite services. Users must manually configure each tool.</p>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 3rem;">🐕 MCPDog's Solution</h2>
+            
+            <div class="solution-grid">
+                <div class="solution-card">
+                    <h3>🔍 Smart Discovery</h3>
+                    <p>Natural language search: "I need email services" → instant recommendations with ratings and examples.</p>
+                </div>
+                <div class="solution-card">
+                    <h3>🧰 Personal Curation</h3>
+                    <p>Build your own pack of favorite services that appear automatically in your MCP client.</p>
+                </div>
+                <div class="solution-card">
+                    <h3>📋 Centralized Information</h3>
+                    <p>All service details, setup guides, and examples in one place. Compare services easily.</p>
+                </div>
+                <div class="solution-card">
+                    <h3>🔄 Dynamic Tool Loading</h3>
+                    <p>Your curated services appear as tools in your MCP client automatically. No manual configuration needed.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title">✨ Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🔍 Smart Service Discovery</h3>
+                    <p>Tell MCPDog what you need in natural language, and it'll fetch the best services with ratings, examples, and setup guides.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🧰 Personal Service Collection</h3>
+                    <p>Build your own pack of favorite MCP services. They automatically appear in your MCP client's tool list.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📋 Detailed Service Profiles</h3>
+                    <p>Get comprehensive information about each service including configuration guides, examples, and user ratings.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎯 One-Click Integration</h3>
+                    <p>Add services to your collection instantly. No need to manually configure each service in your MCP client.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Usage Tracking</h3>
+                    <p>See which services you use most often and get personalized recommendations based on your usage patterns.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💾 Import/Export</h3>
+                    <p>Share your service collections with others or backup your configuration for easy migration.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <h2 class="section-title">🎮 See MCPDog in Action</h2>
+            <div class="demo-container">
+                <div>
+                    <h3 style="margin-bottom: 1rem; color: #667eea;">Simple Natural Language Search</h3>
+                    <p style="margin-bottom: 2rem; color: #666;">Just tell MCPDog what you need, and it will find the perfect services for you:</p>
+                    <div class="demo-code">
+<span class="comment">// Search for email services</span>
+<span class="function">discover_services</span>(<span class="string">"email sending"</span>)
+
+<span class="comment">// MCPDog finds and ranks services:</span>
+🔍 Found 3 email-related services:
+
+1. **EmailService Pro** ⭐⭐⭐⭐⭐
+   📝 Professional email service with templates
+   👥 1,250 users | 📊 4.7/5.0 rating
+   🔧 Easy setup | 🛠️ send_email, templates
+   💡 Example: send_email(to="user@example.com")
+
+<span class="comment">// Add to your personal toolbox</span>
+<span class="function">manage_toolbox</span>(<span class="string">"add"</span>, <span class="string">"email-service-pro"</span>)
+
+✅ Successfully added to your pack!
+🔄 Reconnect MCP client to see new tools
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 1rem; color: #667eea;">Your Personal MCP Toolbox</h3>
+                    <p style="margin-bottom: 2rem; color: #666;">Manage your curated collection of services:</p>
+                    <div class="demo-code">
+<span class="comment">// View your current toolbox</span>
+<span class="function">manage_toolbox</span>(<span class="string">"view"</span>)
+
+🧰 **Your Personal Toolbox** (3 services, 8 tools)
+
+1. **EmailService Pro**
+   📅 Added: 2024-01-15
+   📊 Used: 12 times
+   🛠️ send_email, create_template
+
+2. **Database Helper**
+   📅 Added: 2024-01-10  
+   📊 Used: 8 times
+   🛠️ query_db, create_table
+
+<span class="comment">// Use services directly</span>
+<span class="function">email-service-pro_send_email</span>({
+  <span class="string">"to"</span>: <span class="string">"team@company.com"</span>,
+  <span class="string">"subject"</span>: <span class="string">"Meeting Reminder"</span>
+})
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>🐕 MCPDog</h3>
+                    <p>Your faithful companion for MCP service discovery and management.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>🔗 Links</h3>
+                    <a href="https://github.com/kinhunt/mcpdog">GitHub Repository</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/README.md">Documentation</a>
+                    <a href="https://github.com/kinhunt/mcpdog/issues">Report Issues</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/CONTRIBUTING.md">Contributing</a>
+                </div>
+                <div class="footer-section">
+                    <h3>🚀 Get Started</h3>
+                    <a href="https://github.com/kinhunt/mcpdog">Download MCPDog</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/README.md#quick-start">Quick Start Guide</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/MCPDOG-CONFIG.md">Configuration</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 MCPDog. MIT License. Made with ❤️ for the MCP community.</p>
+                <p><em>"Good dog! Now fetch me that perfect MCP service!"</em> 🐕🦴</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards
+        document.querySelectorAll('.problem-card, .solution-card, .feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

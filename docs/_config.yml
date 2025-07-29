@@ -1,0 +1,28 @@
+# GitHub Pages Configuration for MCPDog
+title: "MCPDog - Your MCP Service Discovery Companion"
+description: "Smart discovery and curation for Model Context Protocol services"
+url: "https://kinhunt.github.io"
+baseurl: "/mcpdog"
+
+# SEO and social media
+author: "MCPDog Contributors"
+twitter:
+  username: mcpdog
+  card: summary_large_image
+
+# GitHub Pages settings
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude files from processing
+exclude:
+  - node_modules/
+  - src/
+  - dist/
+  - package*.json
+  - tsconfig.json
+  - README.md
+  - LICENSE
+  - CONTRIBUTING.md
+  - .gitignore
