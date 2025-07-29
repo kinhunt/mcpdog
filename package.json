@@ -30,12 +30,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/mcpdog.git"
+    "url": "https://github.com/kinhunt/mcpdog.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/mcpdog/issues"
+    "url": "https://github.com/kinhunt/mcpdog/issues"
   },
-  "homepage": "https://github.com/yourusername/mcpdog#readme",
+  "homepage": "https://github.com/kinhunt/mcpdog#readme",
   "author": "MCPDog Contributors",
   "license": "MIT"
 }

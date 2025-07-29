@@ -18,7 +18,7 @@ MCPDog is your faithful friend in navigating the MCP (Model Context Protocol) ec
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/mcpdog
+git clone https://github.com/kinhunt/mcpdog
 cd mcpdog
 npm install
 npm run build
