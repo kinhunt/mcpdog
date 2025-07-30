@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCPDog - Your MCP Service Discovery Companion</title>
-    <meta name="description" content="MCPDog helps you discover, curate, and manage Model Context Protocol (MCP) services with smart search and personal collections.">
+    <title>MCPDog 2.0 - Your Intelligent MCP Tool Assistant</title>
+    <meta name="description" content="MCPDog 2.0: Simply add 'use mcpdog' to any request and get smart tool recommendations instantly. The easiest way to discover and use MCP tools.">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="MCPDog - Your MCP Service Discovery Companion">
-    <meta property="og:description" content="Smart discovery and curation for Model Context Protocol services">
+    <meta property="og:title" content="MCPDog 2.0 - Your Intelligent MCP Tool Assistant">
+    <meta property="og:description" content="Simply add 'use mcpdog' to any request and get smart tool recommendations instantly">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://kinhunt.github.io/mcpdog/">
     
@@ -67,6 +67,23 @@
             margin-right: 0.5rem;
         }
 
+        .version-badge {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         .nav-buttons {
             display: flex;
             gap: 1rem;
@@ -115,15 +132,28 @@
         }
 
         .hero .subtitle {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        .hero-tagline {
+            font-size: 1.3rem;
             margin-bottom: 2rem;
             opacity: 0.9;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .hero-description {
             font-size: 1.1rem;
             margin-bottom: 3rem;
-            max-width: 600px;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
             opacity: 0.9;
@@ -141,106 +171,42 @@
             font-size: 1.1rem;
         }
 
-        /* Problem Section */
-        .problem-section {
-            background: white;
-            padding: 4rem 0;
-        }
-
-        .section-title {
+        /* New Features Section */
+        .whats-new {
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            padding: 3rem 0;
+            color: white;
             text-align: center;
+        }
+
+        .whats-new h2 {
             font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: #333;
-        }
-
-        .problem-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .problem-card {
-            background: #f8f9fa;
-            padding: 2rem;
-            border-radius: 12px;
-            border-left: 4px solid #e74c3c;
-            transition: transform 0.3s ease;
-        }
-
-        .problem-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .problem-card h3 {
-            color: #e74c3c;
             margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        .solution-grid {
+        .whats-new-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
+            margin-top: 2rem;
         }
 
-        .solution-card {
-            background: linear-gradient(135deg, #667eea, #a8b5ff);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            transition: transform 0.3s ease;
-        }
-
-        .solution-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .solution-card h3 {
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Features Section */
-        .features-section {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 4rem 0;
-            color: white;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
+        .whats-new-card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease;
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .feature-card h3 {
+        .whats-new-card h3 {
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        /* Demo Section */
+        /* Demo Section - Updated for 2.0 */
         .demo-section {
             background: white;
             padding: 4rem 0;
@@ -274,6 +240,91 @@
 
         .demo-code .function {
             color: #63b3ed;
+        }
+
+        .demo-code .highlight {
+            background: rgba(255, 255, 0, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        /* Features Section */
+        .features-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .use-cases .section-title {
+            color: #333;
+        }
+
+        .use-case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .use-case-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .use-case-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .use-case-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 1rem;
         }
 
         /* Footer */
@@ -321,7 +372,12 @@
             }
 
             .hero .subtitle {
-                font-size: 1.2rem;
+                font-size: 1.4rem;
+            }
+
+            .hero-tagline {
+                font-size: 1.1rem;
+                padding: 0.8rem 1.5rem;
             }
 
             .demo-container {
@@ -342,6 +398,10 @@
             .header-content {
                 flex-direction: column;
                 gap: 1rem;
+            }
+
+            .whats-new-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -370,10 +430,11 @@
                 <a href="#" class="logo">
                     <span class="emoji">🐕</span>
                     MCPDog
+                    <span class="version-badge">v2.0</span>
                 </a>
                 <div class="nav-buttons">
-                    <a href="https://github.com/kinhunt/mcpdog" class="btn btn-secondary" target="_blank">
-                        📖 Documentation
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/demo.md" class="btn btn-secondary" target="_blank">
+                        🎮 Demo Guide
                     </a>
                     <a href="https://github.com/kinhunt/mcpdog" class="btn btn-primary" target="_blank">
                         ⭐ Star on GitHub
@@ -386,10 +447,13 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1 class="fade-in-up">MCPDog 🐕</h1>
-            <p class="subtitle fade-in-up">Your loyal companion for discovering and fetching MCP services</p>
+            <h1 class="fade-in-up">MCPDog 2.0 🐕</h1>
+            <p class="subtitle fade-in-up">Your Intelligent MCP Tool Assistant</p>
+            <p class="hero-tagline fade-in-up">
+                Simply add <strong>"use mcpdog"</strong> to any request!
+            </p>
             <p class="hero-description fade-in-up">
-                Stop hunting through scattered repositories! MCPDog sniffs out the perfect Model Context Protocol services for your needs and fetches them directly to your toolbox.
+                No more complex tool hunting! Just describe what you want to do and add "use mcpdog" - our intelligent assistant will analyze your needs and recommend the perfect MCP tools with ready-to-use examples.
             </p>
             <div class="hero-buttons fade-in-up">
                 <a href="https://github.com/kinhunt/mcpdog" class="btn btn-primary btn-large" target="_blank">
@@ -402,81 +466,24 @@
         </div>
     </section>
 
-    <!-- Problem & Solution Section -->
-    <section class="problem-section">
+    <!-- What's New Section -->
+    <section class="whats-new">
         <div class="container">
-            <h2 class="section-title">🤔 The Problem MCPDog Solves</h2>
+            <h2>🎉 What's New in MCPDog 2.0</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem;">Complete rewrite with Context7-style user experience!</p>
             
-            <div class="problem-grid">
-                <div class="problem-card">
-                    <h3>🔍 Hard to Find Services</h3>
-                    <p>No central discovery mechanism for MCP services. Users waste time searching through GitHub repositories and documentation.</p>
+            <div class="whats-new-grid">
+                <div class="whats-new-card">
+                    <h3>🧠 Smart Intent Analysis</h3>
+                    <p>Understands your needs in natural language and automatically detects what type of tool you need across 8 categories.</p>
                 </div>
-                <div class="problem-card">
-                    <h3>🧩 Complex Configuration</h3>
-                    <p>Each service requires individual setup and configuration. No unified way to manage multiple services.</p>
+                <div class="whats-new-card">
+                    <h3>🎯 Instant Recommendations</h3>
+                    <p>Get tool suggestions with ratings, user counts, and ready-to-use code examples - no configuration needed!</p>
                 </div>
-                <div class="problem-card">
-                    <h3>📚 Scattered Documentation</h3>
-                    <p>Service information spread across different repositories. Hard to compare and evaluate options.</p>
-                </div>
-                <div class="problem-card">
-                    <h3>🔄 Manual Management</h3>
-                    <p>No way to curate and organize your favorite services. Users must manually configure each tool.</p>
-                </div>
-            </div>
-
-            <h2 class="section-title" style="margin-top: 3rem;">🐕 MCPDog's Solution</h2>
-            
-            <div class="solution-grid">
-                <div class="solution-card">
-                    <h3>🔍 Smart Discovery</h3>
-                    <p>Natural language search: "I need email services" → instant recommendations with ratings and examples.</p>
-                </div>
-                <div class="solution-card">
-                    <h3>🧰 Personal Curation</h3>
-                    <p>Build your own pack of favorite services that appear automatically in your MCP client.</p>
-                </div>
-                <div class="solution-card">
-                    <h3>📋 Centralized Information</h3>
-                    <p>All service details, setup guides, and examples in one place. Compare services easily.</p>
-                </div>
-                <div class="solution-card">
-                    <h3>🔄 Dynamic Tool Loading</h3>
-                    <p>Your curated services appear as tools in your MCP client automatically. No manual configuration needed.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section">
-        <div class="container">
-            <h2 class="section-title">✨ Key Features</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>🔍 Smart Service Discovery</h3>
-                    <p>Tell MCPDog what you need in natural language, and it'll fetch the best services with ratings, examples, and setup guides.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>🧰 Personal Service Collection</h3>
-                    <p>Build your own pack of favorite MCP services. They automatically appear in your MCP client's tool list.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>📋 Detailed Service Profiles</h3>
-                    <p>Get comprehensive information about each service including configuration guides, examples, and user ratings.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>🎯 One-Click Integration</h3>
-                    <p>Add services to your collection instantly. No need to manually configure each service in your MCP client.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>📊 Usage Tracking</h3>
-                    <p>See which services you use most often and get personalized recommendations based on your usage patterns.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>💾 Import/Export</h3>
-                    <p>Share your service collections with others or backup your configuration for easy migration.</p>
+                <div class="whats-new-card">
+                    <h3>🌐 Multi-language Support</h3>
+                    <p>Works with English, Chinese, and mixed language requests. Express yourself naturally!</p>
                 </div>
             </div>
         </div>
@@ -485,56 +492,128 @@
     <!-- Demo Section -->
     <section class="demo-section" id="demo">
         <div class="container">
-            <h2 class="section-title">🎮 See MCPDog in Action</h2>
+            <h2 class="section-title" style="color: #333;">🎮 See MCPDog 2.0 in Action</h2>
             <div class="demo-container">
                 <div>
-                    <h3 style="margin-bottom: 1rem; color: #667eea;">Simple Natural Language Search</h3>
-                    <p style="margin-bottom: 2rem; color: #666;">Just tell MCPDog what you need, and it will find the perfect services for you:</p>
+                    <h3 style="margin-bottom: 1rem; color: #667eea;">Just Add "use mcpdog"!</h3>
+                    <p style="margin-bottom: 2rem; color: #666;">Describe what you want to do and add "use mcpdog" - that's it!</p>
                     <div class="demo-code">
-<span class="comment">// Search for email services</span>
-<span class="function">discover_services</span>(<span class="string">"email sending"</span>)
+<span class="comment">// Your request</span>
+<span class="string">"send email to john@example.com, <span class="highlight">use mcpdog</span>"</span>
 
-<span class="comment">// MCPDog finds and ranks services:</span>
-🔍 Found 3 email-related services:
+<span class="comment">// MCPDog 2.0 responds instantly:</span>
+🐕 **MCPDog 为你找到了完美的工具！**
 
-1. **EmailService Pro** ⭐⭐⭐⭐⭐
-   📝 Professional email service with templates
-   👥 1,250 users | 📊 4.7/5.0 rating
-   🔧 Easy setup | 🛠️ send_email, templates
-   💡 Example: send_email(to="user@example.com")
+**你的需求**: 发送邮件 (收件人: john@example.com)
+**匹配度**: 🎯 高度匹配
 
-<span class="comment">// Add to your personal toolbox</span>
-<span class="function">manage_toolbox</span>(<span class="string">"add"</span>, <span class="string">"email-service-pro"</span>)
+📋 **推荐方案**:
 
-✅ Successfully added to your pack!
-🔄 Reconnect MCP client to see new tools
+**1. EmailService Pro** ⭐⭐⭐⭐⭐ 🎯 (推荐)
+📝 专业邮件服务，支持模板、批量发送
+👥 12450 用户 | 📊 4.8/5.0 评分
+
+🚀 **立即使用**:
+```json
+{
+  "to": "john@example.com",
+  "subject": "Hello from MCPDog!",  
+  "body": "This is a test email"
+}
+```
                     </div>
                 </div>
                 <div>
-                    <h3 style="margin-bottom: 1rem; color: #667eea;">Your Personal MCP Toolbox</h3>
-                    <p style="margin-bottom: 2rem; color: #666;">Manage your curated collection of services:</p>
+                    <h3 style="margin-bottom: 1rem; color: #667eea;">Works with Any Request</h3>
+                    <p style="margin-bottom: 2rem; color: #666;">Database queries, file processing, image editing - just add "use mcpdog":</p>
                     <div class="demo-code">
-<span class="comment">// View your current toolbox</span>
-<span class="function">manage_toolbox</span>(<span class="string">"view"</span>)
+<span class="comment">// Database request</span>
+<span class="string">"query database for user data, <span class="highlight">use mcpdog</span>"</span>
 
-🧰 **Your Personal Toolbox** (3 services, 8 tools)
+<span class="comment">// Image processing</span>
+<span class="string">"resize image photo.jpg, <span class="highlight">use mcpdog</span>"</span>
 
-1. **EmailService Pro**
-   📅 Added: 2024-01-15
-   📊 Used: 12 times
-   🛠️ send_email, create_template
+<span class="comment">// File handling</span>
+<span class="string">"convert CSV to JSON, <span class="highlight">use mcpdog</span>"</span>
 
-2. **Database Helper**
-   📅 Added: 2024-01-10  
-   📊 Used: 8 times
-   🛠️ query_db, create_table
+<span class="comment">// Chinese requests work too!</span>
+<span class="string">"我要处理Excel文件，<span class="highlight">use mcpdog</span>"</span>
 
-<span class="comment">// Use services directly</span>
-<span class="function">email-service-pro_send_email</span>({
-  <span class="string">"to"</span>: <span class="string">"team@company.com"</span>,
-  <span class="string">"subject"</span>: <span class="string">"Meeting Reminder"</span>
-})
+<span class="comment">// MCPDog understands and recommends</span>
+<span class="comment">// the best tools for each task!</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title">✨ MCPDog 2.0 Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🧠 Smart Intent Recognition</h3>
+                    <p>Automatically detects what you want to do across 8 categories: email, database, file, image, API, web, notification, and scheduling.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎯 Intelligent Matching</h3>
+                    <p>Advanced scoring algorithm considers tool popularity, ratings, complexity, and your specific needs to recommend the best options.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📋 Rich Tool Database</h3>
+                    <p>10+ realistic MCP tools with detailed information, user statistics, configuration guides, and usage examples.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💡 Ready-to-Use Examples</h3>
+                    <p>Get code examples pre-filled with your data. Copy and paste to use immediately - no manual configuration needed.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🌐 Multi-Language Support</h3>
+                    <p>Works with English, Chinese, and mixed language requests. Express your needs in whatever language feels natural.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ Context7-Style UX</h3>
+                    <p>Inspired by Context7's elegant trigger system - just add "use mcpdog" to any request and get instant recommendations!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section class="use-cases">
+        <div class="container">
+            <h2 class="section-title">🎯 Perfect for Every Use Case</h2>
+            <div class="use-case-grid">
+                <div class="use-case-card">
+                    <h3>📧 Email & Communication</h3>
+                    <p>Send emails, manage templates, bulk operations</p>
+                    <div class="use-case-example">"send newsletter to subscribers, use mcpdog"</div>
+                </div>
+                <div class="use-case-card">
+                    <h3>💾 Database Operations</h3>
+                    <p>Query data, manage records, database connections</p>
+                    <div class="use-case-example">"find all active users in database, use mcpdog"</div>
+                </div>
+                <div class="use-case-card">
+                    <h3>📁 File Processing</h3>
+                    <p>Convert formats, read/write files, data transformation</p>
+                    <div class="use-case-example">"convert Excel spreadsheet to JSON, use mcpdog"</div>
+                </div>
+                <div class="use-case-card">
+                    <h3>🖼️ Image Editing</h3>
+                    <p>Resize, crop, filter, and process images</p>
+                    <div class="use-case-example">"resize all photos to 800x600, use mcpdog"</div>
+                </div>
+                <div class="use-case-card">
+                    <h3>🌐 API & Web</h3>
+                    <p>HTTP requests, web scraping, API integrations</p>
+                    <div class="use-case-example">"fetch user data from REST API, use mcpdog"</div>
+                </div>
+                <div class="use-case-card">
+                    <h3>⏰ Automation & Scheduling</h3>
+                    <p>Task scheduling, notifications, automated workflows</p>
+                    <div class="use-case-example">"schedule daily backup task, use mcpdog"</div>
                 </div>
             </div>
         </div>
@@ -545,26 +624,26 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>🐕 MCPDog</h3>
-                    <p>Your faithful companion for MCP service discovery and management.</p>
+                    <h3>🐕 MCPDog 2.0</h3>
+                    <p>Your intelligent MCP tool assistant. Just add "use mcpdog" to any request!</p>
                 </div>
                 <div class="footer-section">
                     <h3>🔗 Links</h3>
                     <a href="https://github.com/kinhunt/mcpdog">GitHub Repository</a>
                     <a href="https://github.com/kinhunt/mcpdog/blob/main/README.md">Documentation</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/demo.md">Demo Guide</a>
                     <a href="https://github.com/kinhunt/mcpdog/issues">Report Issues</a>
-                    <a href="https://github.com/kinhunt/mcpdog/blob/main/CONTRIBUTING.md">Contributing</a>
                 </div>
                 <div class="footer-section">
                     <h3>🚀 Get Started</h3>
-                    <a href="https://github.com/kinhunt/mcpdog">Download MCPDog</a>
+                    <a href="https://github.com/kinhunt/mcpdog">Download MCPDog 2.0</a>
                     <a href="https://github.com/kinhunt/mcpdog/blob/main/README.md#quick-start">Quick Start Guide</a>
-                    <a href="https://github.com/kinhunt/mcpdog/blob/main/MCPDOG-CONFIG.md">Configuration</a>
+                    <a href="https://github.com/kinhunt/mcpdog/blob/main/demo.md">Try the Demo</a>
                 </div>
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2024 MCPDog. MIT License. Made with ❤️ for the MCP community.</p>
-                <p><em>"Good dog! Now fetch me that perfect MCP service!"</em> 🐕🦴</p>
+                <p><em>"Just add 'use mcpdog' and let the magic happen!"</em> 🐕✨</p>
             </div>
         </div>
     </footer>
@@ -596,7 +675,7 @@
         }, observerOptions);
 
         // Observe all cards
-        document.querySelectorAll('.problem-card, .solution-card, .feature-card').forEach(card => {
+        document.querySelectorAll('.whats-new-card, .feature-card, .use-case-card').forEach(card => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
             card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
