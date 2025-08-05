@@ -1,12 +1,9 @@
 {   
 "mcpServers": {
-         "mcp-gateway": {
-           "command": "node",
-           "args": [
-     "dist/index.js"
-           ],
-           "cwd": "/Users/qiujianheng/Documents/dev/mcp-gateway"
+         "mcpdog": {
+           "command": "/Users/qiujianheng/Documents/dev/mcpdog/start-mcpdog.sh"
          }
        }
+
      }
 

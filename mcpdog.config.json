@@ -1,0 +1,73 @@
+{
+  "version": "2.0.0",
+  "servers": {
+    "filesystem": {
+      "name": "filesystem",
+      "enabled": true,
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "/tmp"
+      ],
+      "timeout": 30000,
+      "retries": 3
+    },
+    "memory-mcp": {
+      "name": "memory-mcp",
+      "enabled": true,
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "timeout": 30000,
+      "retries": 3
+    },
+    "browsermcp": {
+      "name": "browsermcp",
+      "enabled": true,
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "@browsermcp/mcp@latest"
+      ],
+      "timeout": 30000,
+      "retries": 5,
+      "env": {
+        "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "false",
+        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "PUPPETEER_DISABLE_HEADLESS_WARNING": "true",
+        "PUPPETEER_BROWSER_PATH": "",
+        "NODE_ENV": "production",
+        "DEBUG": "",
+        "DISABLE_OPENCOLLECTIVE": "true",
+        "NO_UPDATE_NOTIFIER": "true"
+      }
+    },
+    "playwright-mcp": {
+      "name": "playwright-mcp",
+      "enabled": true,
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ],
+      "timeout": null,
+      "retries": 3,
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=2048",
+        "PLAYWRIGHT_BROWSERS_PATH": "",
+        "NODE_ENV": "production",
+        "DEBUG": "",
+        "DISABLE_OPENCOLLECTIVE": "true",
+        "NO_UPDATE_NOTIFIER": "true"
+      },
+      "description": true
+    }
+  },
+  "logging": {
+    "level": "info"
+  }
+}

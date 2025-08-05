@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "servers": {},
+  "web": {
+    "enabled": false,
+    "port": 3000,
+    "host": "localhost"
+  },
+  "logging": {
+    "level": "info"
+  }
+}

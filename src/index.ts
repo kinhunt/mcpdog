@@ -1,210 +1,238 @@
-#!/usr/bin/env node
+import { createInterface } from 'readline';
+import { MCPDogServer } from './core/mcpdog-server.js';
+import { MCPDogConfig, MCPMessage, MCPNotification, MCPNotificationRequest, MCPResponse, MCPRequest } from './types/index.js';
+import { ConfigManager } from './config/config-manager.js';
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { IntentAnalyzer } from "./intent-analyzer.js";
-import { ToolRecommendationEngine } from "./tool-recommender.js";
-import { MockToolDatabase } from "./mock-tool-database.js";
+export class StdioMCPServer {
+  private server: MCPDogServer;
+  private readline: any;
+  private processedRequests: Set<string> = new Set(); // Prevent duplicate processing
+  private sentResponses: Set<string> = new Set(); // Prevent duplicate responses
+  private lastProcessedLine: string = ''; // Prevent duplicate line processing
 
-class MCPDogServer {
-  private server: Server;
-  private intentAnalyzer: IntentAnalyzer;
-  private recommendationEngine: ToolRecommendationEngine;
-  private toolDatabase: MockToolDatabase;
-
-  constructor() {
-    this.toolDatabase = new MockToolDatabase();
-    this.intentAnalyzer = new IntentAnalyzer();
-    this.recommendationEngine = new ToolRecommendationEngine(this.toolDatabase);
-    
-    this.server = new Server(
-      {
-        name: "mcpdog",
-        version: "2.0.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
-    );
-
-    this.setupTools();
-    this.setupErrorHandler();
+  constructor(configManager: ConfigManager) {
+    console.error(`[STDIO] Creating StdioMCPServer instance`);
+    this.server = new MCPDogServer(configManager);
+    this.setupServer();
+    this.setupStdio();
   }
 
-  private async setupTools() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "use_mcpdog",
-            description: "🐕 MCPDog 智能工具助手 - 当你需要任何功能时，在提示语后添加 'use mcpdog'，我会为你找到最合适的工具并告诉你如何使用",
-            inputSchema: {
-              type: "object",
-              properties: {
-                user_request: {
-                  type: "string",
-                  description: "用户的完整请求，例如：'send email to john@example.com, use mcpdog' 或 '我要发送邮件给客户，use mcpdog'"
-                }
-              },
-              required: ["user_request"]
-            }
-          }
-        ]
-      };
+  private setupServer(): void {
+    this.server.on('notification', (notification: MCPNotification) => {
+      this.sendMessage(notification);
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+    this.server.on('error', ({ error, context }) => {
+      console.error(`MCPDog error [${context}]:`, error);
+    });
 
-      try {
-        if (name === "use_mcpdog") {
-          const { user_request } = args as { user_request: string };
-          return await this.handleMCPDogRequest(user_request);
-        }
+    this.server.on('started', () => {
+      console.error('MCPDog Server started (stdio mode)');
+    });
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `❓ 未知工具 "${name}"。请使用 "use_mcpdog" 来获取工具推荐。`
-            }
-          ]
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `❌ 错误: ${error instanceof Error ? error.message : String(error)}`
-            }
-          ]
-        };
-      }
+    this.server.on('stopped', () => {
+      console.error('MCPDog Server stopped');
     });
   }
 
-  private async handleMCPDogRequest(userRequest: string) {
-    // 1. 解析用户意图
-    const intent = await this.intentAnalyzer.parseIntent(userRequest);
-    
-    if (!intent.isValidRequest) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `🤔 **MCPDog 需要更多信息**\n\n我没有理解你想要什么功能。请尝试更具体的描述，例如：\n• "send email to someone, use mcpdog"\n• "create a database, use mcpdog"\n• "process an image, use mcpdog"\n\n💡 **提示**: 描述你想要实现的具体功能！`
-          }
-        ]
-      };
-    }
-
-    // 2. 获取工具推荐
-    const recommendations = await this.recommendationEngine.getRecommendations(intent);
-
-    if (recommendations.length === 0) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `🔍 **很抱歉，没有找到匹配的工具**\n\n**你的需求**: ${intent.description}\n\n💡 MCPDog 目前支持的功能类型：\n• 邮件发送 (email, mail)\n• 数据库操作 (database, db)\n• 文件处理 (file, document)\n• 图像处理 (image, photo)\n• API 调用 (api, http)\n\n🚀 尝试使用这些关键词重新描述你的需求！`
-          }
-        ]
-      };
-    }
-
-    // 3. 生成推荐响应
-    return await this.generateRecommendationResponse(intent, recommendations);
-  }
-
-  private async generateRecommendationResponse(intent: any, recommendations: any[]) {
-    let response = `🐕 **MCPDog 为你找到了完美的工具！**\n\n`;
-    response += `**你的需求**: ${intent.description}\n`;
-    response += `**匹配度**: ${intent.confidence > 0.8 ? '🎯 高度匹配' : '✅ 基本匹配'}\n\n`;
-    
-    response += `📋 **推荐方案** (共 ${recommendations.length} 个):\n\n`;
-
-    recommendations.forEach((rec, index) => {
-      const stars = '⭐'.repeat(Math.min(5, Math.round(rec.rating)));
-      const isRecommended = index === 0;
-      
-      response += `**${index + 1}. ${rec.tool.name}** ${stars}${isRecommended ? ' 🎯 (推荐)' : ''}\n`;
-      response += `📝 ${rec.tool.description}\n`;
-      response += `👥 ${rec.tool.stats.users} 用户 | 📊 ${rec.tool.stats.rating}/5.0 评分\n`;
-      response += `⚙️ 配置难度: ${rec.tool.complexity}\n\n`;
-      
-      // 显示具体的调用示例
-      response += `🚀 **立即使用**:\n`;
-      rec.tool.tools.forEach((tool: any) => {
-        const example = this.generateToolCallExample(tool, intent);
-        response += `\`\`\`\n${example}\n\`\`\`\n`;
-      });
-      
-      response += `📋 **完整配置指南**: \`get_tool_info("${rec.tool.id}")\`\n`;
-      response += `➕ **添加到常用工具**: \`add_to_favorites("${rec.tool.id}")\`\n\n`;
-      
-      if (index < recommendations.length - 1) {
-        response += `---\n\n`;
-      }
+  private setupStdio(): void {
+    this.readline = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      crlfDelay: Infinity
     });
 
-    response += `💡 **小贴士**:\n`;
-    response += `• 复制上面的代码直接使用\n`;
-    response += `• 需要配置帮助？使用 \`get_tool_info("tool-id")\`\n`;
-    response += `• 经常使用？添加到收藏夹自动出现在工具列表中\n\n`;
-    response += `🐕 **MCPDog**: "汪！已经为你找到最棒的工具了！"`;
+    this.readline.on('line', (line: string) => {
+      console.error(`[STDIO] Received line: ${line.substring(0, 50)}...`);
+      this.handleInput(line.trim());
+    });
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: response
-        }
-      ]
-    };
+    this.readline.on('close', () => {
+      this.shutdown();
+    });
+
+    // Handle process signals
+    process.on('SIGINT', () => this.shutdown());
+    process.on('SIGTERM', () => this.shutdown());
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught exception:', error);
+      this.shutdown();
+    });
   }
 
-  private generateToolCallExample(tool: any, intent: any): string {
-    // 根据意图生成具体的调用示例
-    const params = { ...tool.exampleParams };
+  private async handleInput(line: string): Promise<void> {
+    console.error(`[STDIO] handleInput called with: ${line.substring(0, 30)}...`);
     
-    // 智能填充参数
-    if (intent.extractedData.email && params.to) {
-      params.to = intent.extractedData.email;
+    if (!line) {
+      return;
     }
-    if (intent.extractedData.subject && params.subject) {
-      params.subject = intent.extractedData.subject;
+    
+    // Prevent processing duplicate lines
+    if (line === this.lastProcessedLine) {
+      console.error(`[DEDUP] Ignoring duplicate line processing`);
+      return;
     }
-    if (intent.extractedData.message && (params.body || params.message)) {
-      params.body = params.body ? intent.extractedData.message : undefined;
-      params.message = params.message ? intent.extractedData.message : undefined;
-    }
+    this.lastProcessedLine = line;
 
-    return `${tool.name}(${JSON.stringify(params, null, 2)})`;
+    try {
+      const message = JSON.parse(line) as MCPMessage;
+      
+      // Check if it's a notification message (no id field)
+      if (!('id' in message)) {
+        const notification = message as MCPNotificationRequest;
+        console.error(`Handling notification: ${notification.method}`);
+        // Notifications don't need responses
+        return;
+      }
+      
+      // Handle regular requests
+      const request = message as MCPRequest;
+      
+      // Generate unique request identifier to prevent duplicate processing (based on method and ID, no timestamp)
+      const requestKey = `${request.method}_${request.id}`;
+      
+      // Check if the same request has already been processed
+      if (this.processedRequests.has(requestKey)) {
+        console.error(`Duplicate request detected, skipping: ${request.method} (id: ${request.id})`);
+        return;
+      }
+      
+      // Record request to prevent duplicates
+      this.processedRequests.add(requestKey);
+      
+      // Clean up old request records (keep latest 500)
+      if (this.processedRequests.size > 500) {
+        const entries = Array.from(this.processedRequests);
+        entries.slice(0, 250).forEach(key => this.processedRequests.delete(key));
+      }
+      
+      console.error(`Processing request: ${request.method} (id: ${request.id})`);
+      const response = await this.server.handleRequest(request, 'stdio-client');
+      console.error(`Sending response for: ${request.method} (id: ${request.id})`);
+      this.sendMessage(response);
+      
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      if (errorMessage === 'DUPLICATE_REQUEST_IGNORED') {
+        console.error(`[DEDUP] Ignoring duplicate request processing at STDIO level`);
+        // Don't send any response
+        return;
+      }
+      console.error('Error processing request:', error);
+      // Don't send error response, only log error
+    }
   }
 
-  private setupErrorHandler() {
-    this.server.onerror = (error) => {
-      console.error("[MCPDog Error]", error);
-    };
+  private sendMessage(message: MCPResponse | MCPNotification): void {
+    // For response messages, check if already sent
+    if ('id' in message && typeof message.id !== 'undefined') {
+      const responseKey = `response_${message.id}`;
+      
+      if (this.sentResponses.has(responseKey)) {
+        console.error(`Duplicate response detected, skipping: id ${message.id}`);
+        return;
+      }
+      
+      this.sentResponses.add(responseKey);
+      
+      // Clean up old response records
+      if (this.sentResponses.size > 200) {
+        const entries = Array.from(this.sentResponses);
+        entries.slice(0, 100).forEach(key => this.sentResponses.delete(key));
+      }
+    }
+    
+    const messageStr = JSON.stringify(message);
+    console.log(messageStr);
+  }
 
-    process.on("SIGINT", async () => {
-      await this.server.close();
+  async start(): Promise<void> {
+    try {
+      console.error(`[STDIO] Starting StdioMCPServer...`);
+      await this.server.start();
+      console.error(`[STDIO] StdioMCPServer started successfully`);
+    } catch (error) {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  }
+
+  private async shutdown(): Promise<void> {
+    console.error('Shutting down MCPDog Server...');
+    
+    try {
+      if (this.readline) {
+        this.readline.close();
+      }
+      
+      await this.server.stop();
       process.exit(0);
-    });
-  }
-
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    console.error("🐕 MCPDog 2.0 Server running - Ready to fetch the perfect tools! 🦴");
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+      process.exit(1);
+    }
   }
 }
 
-const server = new MCPDogServer();
-server.run().catch(console.error);
+// Parse command line arguments
+function parseArgs(): { configPath?: string; webPort?: number } {
+  const args = process.argv.slice(2);
+  const result: { configPath?: string; webPort?: number } = {};
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    if (arg === '--config' || arg === '-c') {
+      result.configPath = args[i + 1];
+      i++;
+    } else if (arg === '--web-port') {
+      result.webPort = parseInt(args[i + 1], 10);
+      i++;
+    } else if (arg === '--help' || arg === '-h') {
+      console.log(`
+MCPDog - Universal MCP Server Manager
+
+Usage: mcpdog [options]
+
+Options:
+  -c, --config <path>     Configuration file path (default: ./mcpdog.config.json)
+  --web-port <port>       Enable web interface on port (experimental)
+  -h, --help              Show this help message
+
+Examples:
+  mcpdog                                    # Start with default config
+  mcpdog --config ./my-config.json         # Use custom config file
+  mcpdog --web-port 3000                   # Enable web interface (not yet implemented)
+
+For more information, visit: https://github.com/kinhunt/mcpdog
+      `);
+      process.exit(0);
+    }
+  }
+
+  return result;
+}
+
+// Main program entry point
+async function main(): Promise<void> {
+  const { configPath, webPort } = parseArgs();
+
+  if (webPort) {
+    console.error('Web interface not yet implemented');
+    process.exit(1);
+  }
+
+  const configManager = new ConfigManager(configPath);
+  await configManager.loadConfig(); // Load config before passing to server
+
+  const mcpServer = new StdioMCPServer(configManager);
+  await mcpServer.start();
+}
+
+// Only start server when this file is run directly, not when imported
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+  });
+}

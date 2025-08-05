@@ -1,0 +1,135 @@
+{
+  "servers": {
+    "gemini": {
+      "enabled": true,
+      "transport": "stdio",
+      "toolsConfig": {
+        "mode": "blacklist",
+        "toolSettings": {
+          "chat-with-openai": {
+            "enabled": true
+          }
+        }
+      },
+      "command": "node",
+      "args": [
+        "/tmp/any-chat-completions-mcp/build/index.js"
+      ],
+      "env": {
+        "AI_CHAT_BASE_URL": "https://api.tu-zi.com/v1",
+        "AI_CHAT_KEY": "sk-WJqJGTf09kvMb7XklNQTxDZhDp0nMI4lZbfHGT1POw2CLtgK",
+        "AI_CHAT_NAME": "OpenAI",
+        "AI_CHAT_MODEL": "gemini-2.5-pro-preview-06-05"
+      },
+      "name": "gemini",
+      "connected": true,
+      "toolCount": 1,
+      "tools": [],
+      "description": "good morning"
+    },
+    "gemini-2-5": {
+      "enabled": false,
+      "transport": "stdio",
+      "toolsConfig": {
+        "mode": "blacklist",
+        "toolSettings": {
+          "chat-with-openai": {
+            "enabled": true
+          }
+        }
+      },
+      "command": "node",
+      "args": [
+        "/tmp/any-chat-completions-mcp/build/index.js"
+      ],
+      "env": {
+        "AI_CHAT_BASE_URL": "https://api.tu-zi.com/v1",
+        "AI_CHAT_KEY": "sk-WJqJGTf09kvMb7XklNQTxDZhDp0nMI4lZbfHGT1POw2CLtgK",
+        "AI_CHAT_NAME": "OpenAI",
+        "AI_CHAT_MODEL": "gemini-2.5-pro-preview-06-05"
+      },
+      "name": "gemini-2-5",
+      "connected": true,
+      "toolCount": 1,
+      "tools": [],
+      "description": "gemini 2.5 second instance"
+    },
+    "goood": {
+      "enabled": true,
+      "transport": "stdio",
+      "toolsConfig": {
+        "mode": "blacklist",
+        "toolSettings": {
+          "chat-with-openai": {
+            "enabled": true
+          }
+        }
+      },
+      "command": "node",
+      "args": [
+        "/tmp/any-chat-completions-mcp/build/index.js"
+      ],
+      "env": {
+        "AI_CHAT_BASE_URL": "https://api.tu-zi.com/v1",
+        "AI_CHAT_KEY": "sk-WJqJGTf09kvMb7XklNQTxDZhDp0nMI4lZbfHGT1POw2CLtgK",
+        "AI_CHAT_NAME": "OpenAI",
+        "AI_CHAT_MODEL": "gpt-image-1"
+      },
+      "name": "goood",
+      "connected": false,
+      "toolCount": 0,
+      "tools": [],
+      "description": "good morning"
+    },
+    "alioss-mcp-server": {
+      "command": "npx",
+      "args": [
+        "alioss-mcp-server"
+      ],
+      "env": {
+        "UPLOAD_MODE": "OSS",
+        "STS_ACCESS_KEY_ID": "your_sts_access_key_id",
+        "STS_ACCESS_KEY_SECRET": "your_sts_access_key_secret",
+        "STS_ROLE_ARN": "acs:ram::your_account_id:role/your_role_name",
+        "OSS_ENDPOINT": "oss-cn-hangzhou.aliyuncs.com",
+        "OSS_BUCKET": "your_bucket_name",
+        "CDN_ENDPOINT": "https://your-cdn-domain.com"
+      },
+      "enabled": false,
+      "transport": "stdio",
+      "toolsConfig": {
+        "mode": "blacklist",
+        "toolSettings": {
+          "transfer_image_to_oss": {
+            "enabled": false
+          }
+        }
+      },
+      "name": "alioss-mcp-server"
+    },
+    "ffmpeg-processor": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "/path/to/ffmpeg_python_mcp/main.py"
+      ],
+      "cwd": "/path/to/ffmpeg_python_mcp",
+      "enabled": true,
+      "transport": "stdio",
+      "toolsConfig": {
+        "mode": "blacklist"
+      },
+      "name": "ffmpeg-processor"
+    }
+  },
+  "version": "2.0.0",
+  "logging": {
+    "level": "info"
+  },
+  "web": {
+    "enabled": false,
+    "port": 3000,
+    "host": "localhost"
+  }
+}

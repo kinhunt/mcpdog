@@ -1,21 +1,42 @@
 {
   "name": "mcpdog",
-  "version": "1.0.0",
-  "description": "MCPDog - Your loyal companion for discovering and fetching MCP services",
+  "version": "2.0.0",
+  "description": "MCPDog - Universal MCP Server Manager with Web Interface",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cd web && tsc && vite build",
     "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "test": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "web": "node dist/index.js --web-port 3000"
+  },
+  "bin": {
+    "mcpdog": "./dist/cli/cli-main.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/server-filesystem": "^2025.7.1",
+    "@modelcontextprotocol/server-puppeteer": "^2025.5.12",
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "eventsource": "^4.0.0",
+    "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.14.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@playwright/test": "^1.54.2",
+    "@types/cors": "^2.8.0",
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.19.9",
+    "@types/ws": "^8.5.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
   },
   "engines": {
     "node": ">=18"
@@ -23,19 +44,15 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "service-discovery",
+    "server-manager",
     "ai-tools",
-    "productivity",
-    "automation"
+    "automation",
+    "web-interface"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/kinhunt/mcpdog.git"
   },
-  "bugs": {
-    "url": "https://github.com/kinhunt/mcpdog/issues"
-  },
-  "homepage": "https://github.com/kinhunt/mcpdog#readme",
   "author": "MCPDog Contributors",
   "license": "MIT"
 }

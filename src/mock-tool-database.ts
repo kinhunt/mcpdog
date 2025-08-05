@@ -1,4 +1,4 @@
-// 模拟工具数据库
+// Mock tool database
 export interface MCPTool {
   id: string;
   name: string;
@@ -30,11 +30,11 @@ export class MockToolDatabase {
 
   private initializeDatabase() {
     this.tools = [
-      // 邮件服务工具
+      // Email service tools
       {
         id: "email-service-pro",
         name: "EmailService Pro",
-        description: "专业邮件服务，支持模板、批量发送和分析功能",
+        description: "Professional email service with template, bulk sending and analytics features",
         category: "email",
         keywords: ["email", "mail", "send", "template", "bulk", "smtp"],
         complexity: "medium",
@@ -46,7 +46,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "send_email",
-            description: "发送单封邮件",
+            description: "Send single email",
             exampleParams: {
               to: "user@example.com",
               subject: "Hello from MCPDog!",
@@ -56,7 +56,7 @@ export class MockToolDatabase {
           },
           {
             name: "send_bulk_email",
-            description: "批量发送邮件",
+            description: "Send bulk emails",
             exampleParams: {
               recipients: ["user1@example.com", "user2@example.com"],
               subject: "Newsletter",
@@ -71,7 +71,7 @@ export class MockToolDatabase {
       {
         id: "gmail-connector",
         name: "Gmail Connector",
-        description: "直接连接Gmail API，支持读取和发送邮件",
+        description: "Direct connection to Gmail API, supports reading and sending emails",
         category: "email",
         keywords: ["gmail", "google", "email", "api"],
         complexity: "hard",
@@ -83,7 +83,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "gmail_send",
-            description: "通过Gmail发送邮件",
+            description: "Send email via Gmail",
             exampleParams: {
               to: "friend@gmail.com",
               subject: "Hi there!",
@@ -92,7 +92,7 @@ export class MockToolDatabase {
           },
           {
             name: "gmail_read",
-            description: "读取Gmail邮件",
+            description: "Read Gmail emails",
             exampleParams: {
               query: "from:support@example.com",
               max_results: 10
@@ -100,13 +100,13 @@ export class MockToolDatabase {
           }
         ],
         envVars: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"],
-        configExample: "需要Google Cloud Console配置OAuth2凭据"
+        configExample: "Requires Google Cloud Console OAuth2 credentials configuration"
       },
 
       {
         id: "simple-mailer",
         name: "Simple Mailer",
-        description: "轻量级SMTP邮件发送工具，配置简单",
+        description: "Lightweight SMTP email sending tool with simple configuration",
         category: "email",
         keywords: ["smtp", "simple", "mail", "lightweight"],
         complexity: "easy",
@@ -118,7 +118,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "smtp_send",
-            description: "SMTP发送邮件",
+            description: "Send email via SMTP",
             exampleParams: {
               to: "user@example.com",
               subject: "Simple Mail",
@@ -129,11 +129,11 @@ export class MockToolDatabase {
         envVars: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"]
       },
 
-      // 数据库工具
+      // Database tools
       {
         id: "universal-db",
         name: "Universal Database Tool",
-        description: "支持多种数据库的通用连接和操作工具",
+        description: "Universal connection and operation tool supporting multiple databases",
         category: "database",
         keywords: ["database", "sql", "mysql", "postgres", "sqlite"],
         complexity: "medium",
@@ -145,7 +145,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "db_query",
-            description: "执行SQL查询",
+            description: "Execute SQL query",
             exampleParams: {
               query: "SELECT * FROM users WHERE active = true",
               database: "main"
@@ -153,7 +153,7 @@ export class MockToolDatabase {
           },
           {
             name: "db_insert",
-            description: "插入数据",
+            description: "Insert data",
             exampleParams: {
               table: "users",
               data: {
@@ -169,7 +169,7 @@ export class MockToolDatabase {
       {
         id: "mongo-helper",
         name: "MongoDB Helper",
-        description: "MongoDB专用操作工具，支持文档操作和聚合查询",
+        description: "MongoDB-specific operation tool supporting document operations and aggregation queries",
         category: "database",
         keywords: ["mongodb", "nosql", "document", "aggregate"],
         complexity: "medium",
@@ -181,7 +181,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "mongo_find",
-            description: "查找文档",
+            description: "Find documents",
             exampleParams: {
               collection: "users",
               filter: { "status": "active" },
@@ -190,7 +190,7 @@ export class MockToolDatabase {
           },
           {
             name: "mongo_insert",
-            description: "插入文档",
+            description: "Insert document",
             exampleParams: {
               collection: "users",
               document: {
@@ -204,11 +204,11 @@ export class MockToolDatabase {
         envVars: ["MONGODB_URI"]
       },
 
-      // 文件处理工具
+      // File processing tools
       {
         id: "file-processor",
         name: "File Processor",
-        description: "全能文件处理工具，支持读取、写入、转换多种格式",
+        description: "Comprehensive file processing tool supporting reading, writing, and converting multiple formats",
         category: "file",
         keywords: ["file", "document", "pdf", "excel", "csv", "json"],
         complexity: "easy",
@@ -220,7 +220,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "read_file",
-            description: "读取文件内容",
+            description: "Read file content",
             exampleParams: {
               filename: "data.json",
               encoding: "utf8"
@@ -228,7 +228,7 @@ export class MockToolDatabase {
           },
           {
             name: "write_file",
-            description: "写入文件",
+            description: "Write file",
             exampleParams: {
               filename: "output.txt",
               content: "Hello, World!",
@@ -237,7 +237,7 @@ export class MockToolDatabase {
           },
           {
             name: "convert_format",
-            description: "转换文件格式",
+            description: "Convert file format",
             exampleParams: {
               input_file: "data.csv",
               output_file: "data.json",
@@ -248,11 +248,11 @@ export class MockToolDatabase {
         envVars: ["FILE_STORAGE_PATH"]
       },
 
-      // 图像处理工具
+      // Image processing tools
       {
         id: "image-magic",
         name: "Image Magic",
-        description: "强大的图像处理工具，支持缩放、裁剪、滤镜等功能",
+        description: "Powerful image processing tool supporting scaling, cropping, filters and more",
         category: "image",
         keywords: ["image", "photo", "resize", "crop", "filter", "watermark"],
         complexity: "medium",
@@ -264,7 +264,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "resize_image",
-            description: "调整图像大小",
+            description: "Resize image",
             exampleParams: {
               input_path: "original.jpg",
               output_path: "resized.jpg",
@@ -274,7 +274,7 @@ export class MockToolDatabase {
           },
           {
             name: "crop_image",
-            description: "裁剪图像",
+            description: "Crop image",
             exampleParams: {
               input_path: "original.jpg",
               output_path: "cropped.jpg",
@@ -288,11 +288,11 @@ export class MockToolDatabase {
         envVars: ["TEMP_DIR"]
       },
 
-      // API调用工具
+      // API calling tools
       {
         id: "http-client",
         name: "HTTP Client",
-        description: "通用HTTP客户端，支持各种API调用和数据获取",
+        description: "Universal HTTP client supporting various API calls and data retrieval",
         category: "api",
         keywords: ["http", "api", "rest", "request", "get", "post"],
         complexity: "easy",
@@ -304,7 +304,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "http_get",
-            description: "发送GET请求",
+            description: "Send GET request",
             exampleParams: {
               url: "https://api.example.com/users",
               headers: {
@@ -314,7 +314,7 @@ export class MockToolDatabase {
           },
           {
             name: "http_post",
-            description: "发送POST请求",
+            description: "Send POST request",
             exampleParams: {
               url: "https://api.example.com/users",
               data: {
@@ -330,11 +330,11 @@ export class MockToolDatabase {
         envVars: ["API_BASE_URL", "API_KEY"]
       },
 
-      // 网页抓取工具
+      // Web scraping tools
       {
         id: "web-scraper",
         name: "Web Scraper",
-        description: "智能网页抓取工具，支持内容提取和数据采集",
+        description: "Intelligent web scraping tool supporting content extraction and data collection",
         category: "web",
         keywords: ["scrape", "crawl", "web", "html", "extract", "data"],
         complexity: "medium",
@@ -346,7 +346,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "scrape_page",
-            description: "抓取网页内容",
+            description: "Scrape webpage content",
             exampleParams: {
               url: "https://example.com",
               selector: ".content",
@@ -355,7 +355,7 @@ export class MockToolDatabase {
           },
           {
             name: "extract_links",
-            description: "提取页面链接",
+            description: "Extract page links",
             exampleParams: {
               url: "https://example.com",
               filter_pattern: "https://example.com/articles/*"
@@ -365,11 +365,11 @@ export class MockToolDatabase {
         envVars: ["USER_AGENT", "PROXY_URL"]
       },
 
-      // 通知工具
+      // Notification tools
       {
         id: "notification-hub",
         name: "Notification Hub",
-        description: "多渠道通知服务，支持邮件、短信、推送等方式",
+        description: "Multi-channel notification service supporting email, SMS, push and more",
         category: "notification",
         keywords: ["notification", "alert", "sms", "push", "webhook"],
         complexity: "medium",
@@ -381,7 +381,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "send_notification",
-            description: "发送通知",
+            description: "Send notification",
             exampleParams: {
               channel: "email",
               recipient: "user@example.com",
@@ -391,7 +391,7 @@ export class MockToolDatabase {
           },
           {
             name: "send_sms",
-            description: "发送短信",
+            description: "Send SMS",
             exampleParams: {
               phone: "+1234567890",
               message: "Your verification code is 123456"
@@ -401,11 +401,11 @@ export class MockToolDatabase {
         envVars: ["SMS_API_KEY", "PUSH_SERVICE_KEY"]
       },
 
-      // 定时任务工具
+      // Scheduled task tools
       {
         id: "task-scheduler",
         name: "Task Scheduler",
-        description: "灵活的任务调度工具，支持cron表达式和延时执行",
+        description: "Flexible task scheduling tool supporting cron expressions and delayed execution",
         category: "schedule",
         keywords: ["schedule", "cron", "timer", "task", "automation"],
         complexity: "hard",
@@ -417,7 +417,7 @@ export class MockToolDatabase {
         tools: [
           {
             name: "schedule_task",
-            description: "调度任务",
+            description: "Schedule task",
             exampleParams: {
               name: "daily_backup",
               cron: "0 2 * * *",
@@ -427,7 +427,7 @@ export class MockToolDatabase {
           },
           {
             name: "delay_task",
-            description: "延时执行任务",
+            description: "Delay task execution",
             exampleParams: {
               action: "send_reminder",
               delay_minutes: 30,
@@ -482,12 +482,12 @@ export class MockToolDatabase {
     });
   }
 
-  // 模拟添加新工具（实际实现中可能从API或配置文件加载）
+  // Mock adding new tool (in actual implementation may load from API or config file)
   async addTool(tool: MCPTool): Promise<void> {
     this.tools.push(tool);
   }
 
-  // 获取工具统计信息
+  // Get tool statistics
   async getStats(): Promise<{
     totalTools: number;
     categoryCounts: { [category: string]: number };

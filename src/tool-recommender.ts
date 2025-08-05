@@ -1,4 +1,4 @@
-// 工具推荐引擎
+// Tool recommendation engine
 import { UserIntent } from "./intent-analyzer.js";
 import { MockToolDatabase, MCPTool } from "./mock-tool-database.js";
 
@@ -15,20 +15,20 @@ export class ToolRecommendationEngine {
   constructor(private toolDatabase: MockToolDatabase) {}
 
   async getRecommendations(intent: UserIntent): Promise<ToolRecommendation[]> {
-    // 1. 从数据库获取相关工具
+    // 1. Get relevant tools from database
     const candidateTools = await this.toolDatabase.findToolsByCategory(intent.category);
     
     if (candidateTools.length === 0) {
       return [];
     }
 
-    // 2. 为每个工具计算推荐分数
+    // 2. Calculate recommendation score for each tool
     const recommendations: ToolRecommendation[] = [];
     
     for (const tool of candidateTools) {
       const score = this.calculateRecommendationScore(tool, intent);
       
-      if (score > 0.3) { // 最低推荐阈值
+      if (score > 0.3) { // Minimum recommendation threshold
         const recommendation: ToolRecommendation = {
           tool,
           score,
@@ -42,7 +42,7 @@ export class ToolRecommendationEngine {
       }
     }
 
-    // 3. 按分数排序并返回前3个
+    // 3. Sort by score and return top 3
     return recommendations
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
@@ -51,12 +51,12 @@ export class ToolRecommendationEngine {
   private calculateRecommendationScore(tool: MCPTool, intent: UserIntent): number {
     let score = 0;
 
-    // 基础类别匹配
+    // Basic category matching
     if (tool.category === intent.category) {
       score += 0.4;
     }
 
-    // 关键词匹配
+    // Keyword matching
     const toolKeywords = [
       ...tool.name.toLowerCase().split(/\s+/),
       ...tool.description.toLowerCase().split(/\s+/),
@@ -72,7 +72,7 @@ export class ToolRecommendationEngine {
     
     score += (keywordMatches / intent.keywords.length) * 0.3;
 
-    // 工具功能匹配
+    // Tool function matching
     const toolFunctions = tool.tools.map(t => t.name.toLowerCase());
     for (const keyword of intent.keywords) {
       if (toolFunctions.some(tf => tf.includes(keyword))) {
@@ -80,17 +80,17 @@ export class ToolRecommendationEngine {
       }
     }
 
-    // 用户数据可用性加分
+    // User data availability bonus
     if (this.hasRequiredData(tool, intent)) {
       score += 0.1;
     }
 
-    // 工具流行度和评分加分
-    const popularityBonus = (tool.stats.users / 10000) * 0.05; // 标准化
+    // Tool popularity and rating bonus
+    const popularityBonus = (tool.stats.users / 10000) * 0.05; // Normalized
     const ratingBonus = (tool.stats.rating / 5) * 0.1;
     score += Math.min(popularityBonus, 0.05) + ratingBonus;
 
-    // 配置难度惩罚
+    // Configuration difficulty penalty
     const difficultyPenalty = {
       'easy': 0,
       'medium': -0.05,
@@ -102,7 +102,7 @@ export class ToolRecommendationEngine {
   }
 
   private hasRequiredData(tool: MCPTool, intent: UserIntent): boolean {
-    // 检查用户是否提供了工具所需的关键数据
+    // Check if user provided key data required by the tool
     const extracted = intent.extractedData;
     
     if (tool.category === 'email') {
@@ -117,13 +117,13 @@ export class ToolRecommendationEngine {
       return !!(extracted.database);
     }
 
-    return true; // 其他类别暂时返回true
+    return true; // Other categories temporarily return true
   }
 
   private calculateDisplayRating(tool: MCPTool, score: number): number {
-    // 结合工具本身评分和推荐分数
+    // Combine tool's own rating and recommendation score
     const baseRating = tool.stats.rating;
-    const scoreBonus = score * 0.5; // 推荐分数也影响显示评分
+          const scoreBonus = score * 0.5; // Recommendation score also affects display rating
     return Math.min(5, baseRating + scoreBonus);
   }
 
@@ -131,59 +131,59 @@ export class ToolRecommendationEngine {
     const reasons = [];
 
     if (tool.category === intent.category) {
-      reasons.push(`专门针对${intent.category}功能设计`);
+      reasons.push(`Specifically designed for ${intent.category} functionality`);
     }
 
     if (score > 0.8) {
-      reasons.push("高度匹配你的需求");
+      reasons.push("Highly matches your requirements");
     } else if (score > 0.6) {
-      reasons.push("较好匹配你的需求");
+      reasons.push("Good match for your requirements");
     }
 
     if (tool.stats.users > 5000) {
-      reasons.push("用户数量多，稳定可靠");
+      reasons.push("Large user base, stable and reliable");
     }
 
     if (tool.stats.rating > 4.5) {
-      reasons.push("用户评分很高");
+      reasons.push("High user rating");
     }
 
     if (tool.complexity === 'easy') {
-      reasons.push("配置简单，易于使用");
+      reasons.push("Simple configuration, easy to use");
     }
 
     if (this.hasRequiredData(tool, intent)) {
-      reasons.push("你已提供了所需的关键信息");
+      reasons.push("You have provided the required key information");
     }
 
-    return reasons.length > 0 ? reasons.join("，") : "功能匹配";
+    return reasons.length > 0 ? reasons.join(", ") : "Feature match";
   }
 
   private generateUsageInstructions(tool: MCPTool, intent: UserIntent): string[] {
     const instructions = [];
 
-    // 基础使用说明
-    instructions.push(`1. 确保 ${tool.name} 已正确配置`);
+    // Basic usage instructions
+    instructions.push(`1. Ensure ${tool.name} is properly configured`);
     
-    // 具体工具调用示例
+    // Specific tool call example
     if (tool.tools.length > 0) {
       const primaryTool = tool.tools[0];
       const example = this.generateContextualExample(primaryTool, intent);
-      instructions.push(`2. 调用主要功能: ${example}`);
+      instructions.push(`2. Call main function: ${example}`);
     }
 
-    // 类别特定的指导
+    // Category-specific guidance
     if (tool.category === 'email') {
-      instructions.push("3. 检查邮件发送状态和日志");
+      instructions.push("3. Check email sending status and logs");
       if (intent.extractedData.email) {
-        instructions.push(`4. 确认收件人邮箱: ${intent.extractedData.email}`);
+        instructions.push(`4. Confirm recipient email: ${intent.extractedData.email}`);
       }
     } else if (tool.category === 'database') {
-      instructions.push("3. 测试数据库连接");
-      instructions.push("4. 检查查询结果");
+      instructions.push("3. Test database connection");
+              instructions.push("4. Check query results");
     } else if (tool.category === 'file') {
-      instructions.push("3. 验证文件路径和权限");
-      instructions.push("4. 检查文件处理结果");
+              instructions.push("3. Verify file path and permissions");
+              instructions.push("4. Check file processing results");
     }
 
     return instructions;
@@ -192,7 +192,7 @@ export class ToolRecommendationEngine {
   private generateContextualExample(toolDef: any, intent: UserIntent): string {
     const params = { ...toolDef.exampleParams };
     
-    // 根据用户意图智能填充参数
+    // Intelligently fill parameters based on user intent
     if (intent.extractedData.email && params.to) {
       params.to = intent.extractedData.email;
     }
@@ -216,36 +216,36 @@ export class ToolRecommendationEngine {
   private generateConfigurationSteps(tool: MCPTool): string[] {
     const steps = [];
 
-    // 通用配置步骤
-    steps.push(`1. 安装 ${tool.name}: npm install ${tool.id}`);
+    // General configuration steps
+          steps.push(`1. Install ${tool.name}: npm install ${tool.id}`);
     
     if (tool.envVars && tool.envVars.length > 0) {
-      steps.push(`2. 配置环境变量: ${tool.envVars.join(', ')}`);
+      steps.push(`2. Configure environment variables: ${tool.envVars.join(', ')}`);
     }
 
-    // 特定类别的配置
+    // Category-specific configuration
     switch (tool.category) {
       case 'email':
-        steps.push("3. 配置SMTP服务器或API密钥");
-        steps.push("4. 测试邮件发送功能");
+        steps.push("3. Configure SMTP server or API keys");
+                  steps.push("4. Test email sending functionality");
         break;
         
       case 'database':
-        steps.push("3. 配置数据库连接参数");
-        steps.push("4. 测试数据库连接");
+                  steps.push("3. Configure database connection parameters");
+                  steps.push("4. Test database connection");
         break;
         
       case 'api':
-        steps.push("3. 获取并配置API密钥");
-        steps.push("4. 测试API调用");
+                  steps.push("3. Obtain and configure API keys");
+                  steps.push("4. Test API calls");
         break;
         
       default:
-        steps.push("3. 根据文档完成特定配置");
-        steps.push("4. 测试基本功能");
+        steps.push("3. Complete specific configuration according to documentation");
+        steps.push("4. Test basic functionality");
     }
 
-    steps.push(`5. 将 ${tool.name} 添加到MCP客户端配置`);
+    steps.push(`5. Add ${tool.name} to MCP client configuration`);
 
     return steps;
   }
