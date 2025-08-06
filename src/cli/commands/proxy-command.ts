@@ -35,7 +35,8 @@ export class ProxyCommand {
       
       if (!isDaemonRunning) {
         // Auto-start daemon with default parameters
-        await this.autoStartDaemon(daemonPort, pidFile);
+        // In MCP mode, suppress all output to avoid JSON parsing errors
+        await this.autoStartDaemonSilent(daemonPort, pidFile);
         
         // Wait a moment for daemon to fully start
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -63,6 +64,7 @@ export class ProxyCommand {
 
     } catch (error) {
       // Only output error on connection failure, then exit immediately
+      // Use process.stderr.write instead of CLIUtils to avoid color codes
       process.stderr.write(`MCPDog: Failed to connect to daemon on port ${daemonPort}\n`);
       process.stderr.write(`Please ensure daemon is running: mcpdog daemon start\n`);
       process.exit(1);
@@ -137,6 +139,47 @@ export class ProxyCommand {
       ], { 
         detached: true, 
         stdio: 'ignore' 
+      });
+      
+      // Detach the daemon process from parent
+      daemon.unref();
+      
+      // Don't wait for the daemon to start completely, just for it to spawn
+      daemon.on('spawn', () => {
+        resolve();
+      });
+      
+      daemon.on('error', (error) => {
+        reject(error);
+      });
+      
+      // If no spawn event in 5 seconds, consider it failed
+      setTimeout(() => {
+        reject(new Error('Daemon failed to start within 5 seconds'));
+      }, 5000);
+    });
+  }
+
+  /**
+   * Auto-start daemon in silent mode (no output to avoid MCP client errors)
+   */
+  private async autoStartDaemonSilent(daemonPort: number, pidFile: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const mcpdogPath = process.argv[0]; // node executable path
+      const scriptPath = process.argv[1]; // path to cli-main.js
+      const configPath = this.configManager.getConfigPath();
+      
+      // Use --no-color and --json flags to suppress all output
+      const daemon = spawn(mcpdogPath, [
+        scriptPath, 'daemon', 'start',
+        '--config', configPath,
+        '--daemon-port', daemonPort.toString(),
+        '--pid-file', pidFile,
+        '--no-color',
+        '--json'
+      ], { 
+        detached: true, 
+        stdio: 'ignore' // Completely ignore all stdio to avoid any output
       });
       
       // Detach the daemon process from parent

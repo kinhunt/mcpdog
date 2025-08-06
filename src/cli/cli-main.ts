@@ -80,7 +80,10 @@ async function main() {
     const finalArgs = command ? args : [];
     
     if (!command) {
-      CLIUtils.info('🚀 Starting MCPDog in auto mode (proxy + daemon)...');
+      // In auto mode, don't output colored text to avoid MCP client errors
+      if (!values.json && !values['no-color']) {
+        CLIUtils.info('🚀 Starting MCPDog in auto mode (proxy + daemon)...');
+      }
     }
     
     if (!command && values.help) {
