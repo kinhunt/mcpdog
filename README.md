@@ -1,349 +1,221 @@
 # MCPDog 🐕
 
-> **Universal MCP Server Manager with Web Interface**
+> **Universal MCP Server Manager - Your Gateway to Multiple MCP Servers**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-MCPDog is a comprehensive MCP (Model Context Protocol) server management solution that provides both command-line interface and web-based dashboard for managing multiple MCP servers. It acts as a proxy layer that unifies multiple downstream MCP servers into a single, manageable interface.
+MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you to use multiple MCP servers through a single interface. Perfect for MCP clients like Claude Desktop, Cursor, and other AI assistants that support MCP.
 
-## 🎯 Features
+## 🎯 What MCPDog Does
 
-### 🔧 Core Capabilities
-- **🔄 Multi-Server Proxy** - Manage multiple MCP servers through a single interface
-- **🌐 Web Dashboard** - Real-time monitoring and management via web interface
-- **⚡ Protocol Detection** - Automatic detection of optimal protocols for MCP servers
-- **📋 Configuration Management** - Add, remove, update server configurations via CLI
-- **🔍 Performance Optimization** - Automatic optimization of server configurations
-- **🛠️ Diagnostics & Auditing** - Comprehensive diagnostics and configuration auditing
-- **📊 Real-time Monitoring** - Live status monitoring with WebSocket support
+MCPDog acts as a **proxy layer** that combines multiple MCP servers into one unified interface. Instead of configuring each MCP server separately in your client, you configure MCPDog once and it manages all your servers for you.
 
-### 🚀 Advanced Features
-- **🔗 Multiple Transport Support** - stdio, HTTP SSE, Streamable HTTP
-- **🎯 Smart Tool Routing** - Intelligent routing of tool calls to appropriate servers
-- **📈 Performance Analytics** - Detailed performance metrics and optimization suggestions
-- **🔒 Security Auditing** - Security compliance checking and recommendations
-- **🔄 Hot Reload** - Configuration changes without server restart
-- **📝 Comprehensive Logging** - Detailed logging with multiple log levels
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   MCP Client    │    │   Web Dashboard │    │   CLI Interface │
-│   (Claude, etc) │    │   (Port 3000)   │    │   (mcpdog cmd)  │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼─────────────┐
-                    │      MCPDog Server        │
-                    │   (Proxy & Manager)       │
-                    └─────────────┬─────────────┘
-                                  │
-                    ┌─────────────▼─────────────┐
-                    │      Tool Router          │
-                    │   (Request Routing)       │
-                    └─────────────┬─────────────┘
-                                  │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
-    ┌─────▼─────┐         ┌───────▼──────┐         ┌─────▼─────┐
-    │ Server 1  │         │  Server 2   │         │ Server N  │
-    │(stdio)    │         │(HTTP SSE)   │         │(HTTP)     │
-    └───────────┘         └─────────────┘         └───────────┘
-```
+### Key Benefits
+- **🔄 Single Configuration** - Configure once, use many servers
+- **🌐 Web Dashboard** - Manage servers visually through web interface
+- **⚡ Auto-Detection** - Automatically detects optimal protocols for each server
+- **🔧 Easy Management** - Add, remove, and configure servers via CLI or web
+- **📊 Real-time Monitoring** - See server status and tool availability in real-time
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js >= 18
-- npm or yarn
+- An MCP client (Claude Desktop, Cursor, etc.)
 
-### Installation & Usage
-
-#### Option 1: Quick Start with npx (Recommended)
+### Step 1: Start MCPDog (Optional)
 ```bash
-# Run directly with npx (no installation required)
-npx mcpdog --version
-
-# Start daemon with web interface
-npx mcpdog daemon start --web-port 3000
-
-# Check status
-npx mcpdog status
-
-# Add servers
-npx mcpdog config add my-server "npx @playwright/mcp@latest" --auto-detect
+# Start MCPDog daemon with web interface (optional)
+npx mcpdog@latest daemon start --web-port 3000
 ```
 
-#### Option 2: Local Installation
+> **Note**: You can skip this step if you only want to use MCPDog through your MCP client. The daemon will start automatically when your client connects.
+
+### Step 2: Add Your MCP Servers
 ```bash
-# Clone the repository
-git clone https://github.com/kinhunt/mcpdog.git
-cd mcpdog
+# Add a Playwright MCP server
+npx mcpdog@latest config add playwright "npx @playwright/mcp@latest" --auto-detect
 
-# Install dependencies
-npm install
+# Add a filesystem server
+npx mcpdog@latest config add filesystem "npx @modelcontextprotocol/server-filesystem /tmp" --auto-detect
 
-# Build the project
-npm run build
-
-# Create global command (optional)
-npm link
+# Add an HTTP-based server
+npx mcpdog@latest config add api-server https://api.example.com --transport streamable-http
 ```
 
-### Basic Usage
+### Step 3: Configure Your MCP Client
 
-#### 1. Start the Daemon (Web Interface)
-```bash
-# Start daemon with web interface
-mcpdog daemon start
-
-# Or with custom port
-mcpdog daemon start --web-port 3000
-
-# Or with npx
-npx mcpdog daemon start --web-port 3000
-```
-
-#### 2. Add MCP Servers
-```bash
-# Add server with auto-detection
-mcpdog config add my-server "npx @playwright/mcp@latest" --auto-detect
-
-# Add HTTP server
-mcpdog config add api-server https://api.example.com --transport streamable-http
-
-# Add with custom configuration
-mcpdog config add filesystem "npx @modelcontextprotocol/server-filesystem /tmp" --timeout 30000
-```
-
-#### 3. Access Web Dashboard
-Open your browser and navigate to `http://localhost:3000` to access the web dashboard.
-
-## 📖 Detailed Usage
-
-### CLI Commands
-
-#### Configuration Management
-```bash
-# List all servers
-mcpdog config list
-
-# Add server with auto-detection
-mcpdog config add my-server "npx @playwright/mcp@latest" --auto-detect
-
-# Update server configuration
-mcpdog config update my-server --timeout 60000 --description "Updated server"
-
-# Remove server
-mcpdog config remove old-server
-
-# Show server details
-mcpdog config show my-server
-```
-
-#### Protocol Detection
-```bash
-# Detect protocols for all servers
-mcpdog detect --all
-
-# Detect specific server
-mcpdog detect my-server
-
-# Detect new endpoint
-mcpdog detect https://api.example.com --detailed
-```
-
-#### Performance Optimization
-```bash
-# Preview optimizations
-mcpdog optimize --all --preview
-
-# Apply optimizations
-mcpdog optimize --all --apply
-
-# Optimize specific server
-mcpdog optimize my-server --preview
-```
-
-#### Diagnostics & Auditing
-```bash
-# Run health check
-mcpdog diagnose --health-check
-
-# Auto-fix issues
-mcpdog diagnose --fix
-
-# Security audit
-mcpdog audit --security
-
-# Performance audit
-mcpdog audit --performance
-```
-
-### Web Dashboard Features
-
-#### Server Management
-- **Real-time Status** - Live connection status and tool counts
-- **Configuration Editor** - In-browser server configuration editing
-- **Server Toggle** - Enable/disable servers with one click
-- **Tool Management** - Enable/disable individual tools
-
-#### Monitoring & Logs
-- **Live Logs** - Real-time server logs with filtering
-- **Performance Metrics** - Response times and error rates
-- **Connection Status** - Visual connection status indicators
-- **Tool Statistics** - Tool usage and availability stats
-
-#### Configuration
-- **Client Config Generation** - Generate configurations for Claude Desktop, Cursor, etc.
-- **Import/Export** - Backup and restore configurations
-- **Validation** - Configuration validation and error checking
-
-### MCP Client Configuration
-
-#### Claude Desktop
+#### For Claude Desktop
+Add this to your Claude Desktop configuration:
 ```json
 {
   "mcpServers": {
     "mcpdog": {
-      "command": "mcpdog",
-      "args": ["serve"],
-      "cwd": "/path/to/mcpdog"
+      "command": "npx",
+      "args": ["mcpdog@latest"]
     }
   }
 }
 ```
 
-#### Cursor
+#### For Cursor
+Add this to your Cursor MCP configuration:
 ```json
 {
   "mcp": {
     "mcpServers": {
       "mcpdog": {
-        "command": "mcpdog",
-        "args": ["serve"],
-        "cwd": "/path/to/mcpdog"
+        "command": "npx",
+        "args": ["mcpdog@latest"]
       }
     }
   }
 }
 ```
 
-## 🏗️ Architecture Details
+> **Note**: When your MCP client connects to MCPDog, the daemon will automatically start and run in the background. If you need to stop it, manually run `npx mcpdog@latest daemon stop`.
 
-### Core Components
+### Step 4: Access Web Dashboard (Optional)
+Open `http://localhost:3000` in your browser to:
+- Monitor server status
+- View available tools
+- Manage server configurations
+- View real-time logs
 
-#### 1. MCPDog Server (`src/core/mcpdog-server.ts`)
-- Main server implementation
-- Handles MCP protocol communication
-- Manages client connections and requests
+> **Note**: The daemon runs in the background and will continue running even after you close your MCP client. To stop it, run `npx mcpdog@latest daemon stop`.
 
-#### 2. Tool Router (`src/router/tool-router.ts`)
-- Routes tool calls to appropriate servers
-- Handles tool name conflicts
-- Manages tool availability
+## 📖 Usage Guide
 
-#### 3. Adapter Factory (`src/adapters/adapter-factory.ts`)
-- Creates adapters for different transport protocols
-- Supports stdio, HTTP SSE, and Streamable HTTP
-- Handles connection management
+### Managing Servers
 
-#### 4. Config Manager (`src/config/config-manager.ts`)
-- Manages server configurations
-- Handles configuration persistence
-- Provides configuration validation
-
-### Transport Protocols
-
-#### stdio
-- Direct process communication
-- Suitable for local servers
-- Low latency
-
-#### HTTP SSE (Server-Sent Events)
-- Real-time streaming
-- Good for remote servers
-- Browser-compatible
-
-#### Streamable HTTP
-- HTTP-based streaming
-- Compatible with most HTTP clients
-- Good for cloud services
-
-## 📁 Project Structure
-
-```
-mcpdog/
-├── src/
-│   ├── core/           # Core server implementation
-│   ├── adapters/       # Transport protocol adapters
-│   ├── router/         # Tool routing logic
-│   ├── config/         # Configuration management
-│   ├── cli/            # Command-line interface
-│   ├── web/            # Web server implementation
-│   ├── daemon/         # Daemon process management
-│   ├── logging/        # Logging system
-│   └── types/          # TypeScript type definitions
-├── web/                # React web dashboard
-│   ├── src/
-│   │   ├── components/ # React components
-│   │   ├── store/      # State management
-│   │   └── types/      # TypeScript types
-│   └── dist/           # Built web assets
-├── docs/               # Documentation
-└── tests/              # Test files
-```
-
-## 🔧 Development
-
-### Building
+#### List All Servers
 ```bash
-# Build TypeScript
-npm run build
-
-# Build web dashboard
-cd web && npm run build
-
-# Development mode
-npm run dev
+npx mcpdog@latest config list
 ```
 
-### Testing
+#### Add a New Server
 ```bash
-# Run tests
-npm test
+# Basic server with auto-detection
+npx mcpdog@latest config add my-server "npx @some/mcp-server@latest" --auto-detect
 
-# Run integration tests
-npm run test:integration
+# HTTP server
+npx mcpdog@latest config add api-server https://api.example.com --transport streamable-http
+
+# With custom timeout
+npx mcpdog@latest config add slow-server "npx @slow/mcp-server@latest" --timeout 60000
 ```
 
-### Development Server
+#### Update Server Configuration
 ```bash
-# Start development server
-npm run dev
-
-# Start with web interface
-npm run web
+npx mcpdog@latest config update my-server --timeout 45000 --description "Updated description"
 ```
 
-## 📊 Configuration
+#### Remove a Server
+```bash
+npx mcpdog@latest config remove old-server
+```
 
-### Configuration File Location
-- **Default**: `./mcpdog.config.json`
-- **User**: `~/.mcpdog/mcpdog.config.json`
+#### Show Server Details
+```bash
+npx mcpdog@latest config show my-server
+```
+
+### Server Management Commands
+
+#### Check Status
+```bash
+npx mcpdog@latest status
+```
+
+#### Detect Protocols
+```bash
+# Detect for all servers
+npx mcpdog@latest detect --all
+
+# Detect for specific server
+npx mcpdog@latest detect my-server
+```
+
+#### Optimize Performance
+```bash
+# Preview optimizations
+npx mcpdog@latest optimize --all --preview
+
+# Apply optimizations
+npx mcpdog@latest optimize --all --apply
+```
+
+#### Run Diagnostics
+```bash
+# Health check
+npx mcpdog@latest diagnose --health-check
+
+# Auto-fix issues
+npx mcpdog@latest diagnose --fix
+```
+
+### Daemon Management
+
+#### Start Daemon
+```bash
+# Start with default settings
+npx mcpdog@latest daemon start
+
+# Start with custom web port
+npx mcpdog@latest daemon start --web-port 3000
+
+# Start in background
+npx mcpdog@latest daemon start --background
+```
+
+#### Stop Daemon
+```bash
+npx mcpdog@latest daemon stop
+```
+
+#### Check Daemon Status
+```bash
+npx mcpdog@latest daemon status
+```
+
+## 🌐 Web Dashboard
+
+The web dashboard provides a visual interface for managing your MCP servers:
+
+### Features
+- **Server Status** - Real-time connection status and tool counts
+- **Tool Management** - Enable/disable individual tools
+- **Configuration Editor** - Edit server settings in the browser
+- **Live Logs** - View real-time server logs
+- **Performance Metrics** - Monitor response times and errors
+- **Client Config Generator** - Generate configurations for your MCP client
+
+### Access Dashboard
+1. Start the daemon: `npx mcpdog@latest daemon start --web-port 3000`
+2. Open `http://localhost:3000` in your browser
+3. Manage your servers visually
+
+> **Note**: The daemon will continue running in the background. To stop it, use `npx mcpdog@latest daemon stop`.
+
+## 🔧 Configuration
+
+### Configuration Files
+MCPDog uses configuration files to store server settings:
+
+- **Default**: `~/.mcpdog/mcpdog.config.json` (recommended)
+- **Local**: `./mcpdog.config.json`
 - **Custom**: Specify with `--config` flag
+
+> **Tip**: The default configuration file is stored in `~/.mcpdog/` directory. This is the recommended location for storing your server configurations.
 
 ### Configuration Format
 ```json
 {
   "version": "2.0.0",
   "servers": {
-    "my-server": {
-      "name": "my-server",
+    "playwright": {
+      "name": "playwright",
       "enabled": true,
       "transport": "stdio",
       "command": "npx",
@@ -354,46 +226,68 @@ npm run web
         "mode": "all"
       }
     }
-  },
-  "logging": {
-    "level": "info"
   }
 }
 ```
 
-## 🤝 Contributing
+## 🛠️ Supported Transport Protocols
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+### stdio
+- Direct process communication
+- Best for local servers
+- Lowest latency
 
-### Development Setup
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+### HTTP SSE (Server-Sent Events)
+- Real-time streaming
+- Good for remote servers
+- Browser-compatible
 
-### Code Style
-- TypeScript for type safety
-- ESLint for code linting
-- Prettier for code formatting
-- Conventional commits for commit messages
+### Streamable HTTP
+- HTTP-based streaming
+- Compatible with most HTTP clients
+- Good for cloud services
+
+## 📊 Troubleshooting
+
+### Common Issues
+
+#### Server Not Starting
+```bash
+# Check server status
+npx mcpdog@latest status
+
+# Run diagnostics
+npx mcpdog@latest diagnose --health-check
+
+# Check logs
+npx mcpdog@latest daemon logs
+```
+
+#### Tools Not Available
+```bash
+# Detect protocols
+npx mcpdog@latest detect --all
+
+# Check tool availability
+npx mcpdog@latest config show my-server
+```
+
+#### Connection Issues
+```bash
+# Test server connection
+npx mcpdog@latest diagnose --connectivity
+
+# Auto-fix issues
+npx mcpdog@latest diagnose --fix
+```
+
+### Getting Help
+- **Issues**: [GitHub Issues](https://github.com/kinhunt/mcpdog/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/kinhunt/mcpdog/discussions)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Model Context Protocol](https://modelcontextprotocol.io/) for the protocol specification
-- [Claude Desktop](https://claude.ai/) for MCP client implementation
-- [Cursor](https://cursor.sh/) for MCP integration
-- All contributors and users of MCPDog
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/kinhunt/mcpdog/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/kinhunt/mcpdog/discussions)
-- **Documentation**: [Project Wiki](https://github.com/kinhunt/mcpdog/wiki)
 
 ---
 
