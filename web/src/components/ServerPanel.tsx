@@ -48,6 +48,14 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
     setActiveTab('tools'); // Switch to Tool List tab when server changes
   }, [server.name]); // Use server.name as dependency to detect server changes
 
+  // Auto-enter edit mode when switching to config tab
+  useEffect(() => {
+    if (activeTab === 'config') {
+      setIsEditing(true);
+      setShowAdvanced(true);
+    }
+  }, [activeTab]);
+
   // Validate server name
   const validateServerName = (name: string) => {
     if (!name || name.trim() === '') {

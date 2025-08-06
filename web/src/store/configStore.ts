@@ -140,7 +140,9 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
                   connected: newEnabled ? server.connected : false,
                   // Reset tool count when disabling
                   toolCount: newEnabled ? server.toolCount : 0,
-                  enabledToolCount: newEnabled ? server.enabledToolCount : 0
+                  enabledToolCount: newEnabled ? server.enabledToolCount : 0,
+                  // When disabling, also set all tools to disabled to ensure correct global count
+                  tools: newEnabled ? server.tools : (server.tools?.map(tool => ({ ...tool, enabled: false })) || [])
                 }
               : server
           )
@@ -159,7 +161,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
           set(state => ({
             servers: state.servers.map(server => 
               server.name === serverName 
-                ? { ...server, enabled: targetServer.enabled, connected: targetServer.connected, toolCount: targetServer.toolCount, enabledToolCount: targetServer.enabledToolCount }
+                ? { ...server, enabled: targetServer.enabled, connected: targetServer.connected, toolCount: targetServer.toolCount, enabledToolCount: targetServer.enabledToolCount, tools: targetServer.tools }
                 : server
             )
           }));
