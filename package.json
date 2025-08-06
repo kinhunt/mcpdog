@@ -1,6 +1,6 @@
 {
   "name": "mcpdog",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "MCPDog - Universal MCP Server Manager with Web Interface",
   "main": "dist/index.js",
   "type": "module",
