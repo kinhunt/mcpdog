@@ -129,16 +129,53 @@ export const useWebSocket = (url: string) => {
       // 如果是服务器启用事件，触发工具列表重新加载
       if (data.event === 'server-connected' || data.event === 'server-enabled') {
         console.log('[WebSocket] Server enabled/connected, requesting status update to refresh tools');
-        // 延迟请求确保后端工具已加载完成
-        setTimeout(() => {
-          socket.emit('request-status');
-        }, 1000);
         
-        // 重新加载配置以恢复工具状态
-        setTimeout(() => {
-          console.log('[WebSocket] Reloading config to restore tool states after server connection');
-          loadConfig();
-        }, 2000); // 2秒延迟，确保服务器完全启动并加载工具
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        // 使用更可靠的方法：监听工具更新事件而不是固定延时
+        // 当服务器连接后，等待routes-updated事件来确认工具已加载
+        const handleRoutesUpdated = (routesData: any) => {
+          if (routesData.serverName === data.serverName) {
+            console.log('[WebSocket] Tools updated for reconnected server, reloading config');
+            loadConfig();
+            // 移除事件监听器，避免重复处理
+            socket.off('routes-updated', handleRoutesUpdated);
+            clearTimeout(fallbackTimeout);
+          }
+        };
+        
+        // 监听routes-updated事件
+        socket.on('routes-updated', handleRoutesUpdated);
+        
+        // 主动检查工具状态的函数
+        const checkToolsAndRetry = () => {
+          retryCount++;
+          console.log(`[WebSocket] Checking tools for server ${data.serverName}, attempt ${retryCount}/${maxRetries}`);
+          
+          // 请求最新状态
+          socket.emit('request-status');
+          
+          if (retryCount < maxRetries) {
+            // 如果还有重试机会，继续等待
+            setTimeout(checkToolsAndRetry, 2000);
+          } else {
+            // 达到最大重试次数，强制重新加载配置
+            console.log('[WebSocket] Max retries reached, forcing config reload');
+            loadConfig();
+            socket.off('routes-updated', handleRoutesUpdated);
+            clearTimeout(fallbackTimeout);
+          }
+        };
+        
+        // 设置超时作为备用方案，如果5秒内没有收到routes-updated事件
+        const fallbackTimeout = setTimeout(() => {
+          console.log('[WebSocket] Timeout reached, starting retry mechanism');
+          checkToolsAndRetry();
+        }, 3000);
+        
+        // 立即开始第一次检查
+        setTimeout(checkToolsAndRetry, 1000);
       }
       
       // 记录事件
