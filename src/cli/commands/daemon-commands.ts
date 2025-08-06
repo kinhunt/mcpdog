@@ -9,12 +9,34 @@ import { DaemonClient } from '../../daemon/daemon-client.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { createServer } from 'net';
+import os from 'os';
 
 export class DaemonCommands {
   private configManager: ConfigManager;
+  private mcpdogDir: string;
 
   constructor(configPath?: string) {
     this.configManager = new ConfigManager(configPath);
+    // Create ~/.mcpdog directory for PID files and configs
+    this.mcpdogDir = path.join(os.homedir(), '.mcpdog');
+  }
+
+  /**
+   * Ensure ~/.mcpdog directory exists
+   */
+  private async ensureMCPDogDir(): Promise<void> {
+    try {
+      await fs.mkdir(this.mcpdogDir, { recursive: true });
+    } catch (error) {
+      // Directory already exists or cannot be created
+    }
+  }
+
+  /**
+   * Get default PID file path in ~/.mcpdog directory
+   */
+  private getDefaultPidFile(): string {
+    return path.join(this.mcpdogDir, 'mcpdog.pid');
   }
 
   /**
@@ -63,9 +85,12 @@ export class DaemonCommands {
   async start(args: string[], options: any): Promise<void> {
     const port = parseInt(options['daemon-port']) || 9999;
     let webPort = parseInt(options['web-port']);
-    const pidFile = options['pid-file'] || path.join(process.cwd(), 'mcpdog.pid');
+    const pidFile = options['pid-file'] || this.getDefaultPidFile();
     
     try {
+      // Ensure ~/.mcpdog directory exists
+      await this.ensureMCPDogDir();
+      
       // Check if daemon is already running
       const isRunning = await this.isDaemonRunning(pidFile);
       if (isRunning) {
@@ -133,7 +158,7 @@ export class DaemonCommands {
   }
 
   async stop(args: string[], options: any): Promise<void> {
-    const pidFile = options['pid-file'] || path.join(process.cwd(), 'mcpdog.pid');
+    const pidFile = options['pid-file'] || this.getDefaultPidFile();
     
     try {
       const pid = await this.getPidFromFile(pidFile);

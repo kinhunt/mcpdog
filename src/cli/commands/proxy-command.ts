@@ -8,9 +8,22 @@ import { StdioMCPServer } from '../../index.js';
 import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
 import path from 'path';
+import os from 'os';
 
 export class ProxyCommand {
-  constructor(private configManager: ConfigManager) {}
+  private mcpdogDir: string;
+
+  constructor(private configManager: ConfigManager) {
+    // Use ~/.mcpdog directory for PID files
+    this.mcpdogDir = path.join(os.homedir(), '.mcpdog');
+  }
+
+  /**
+   * Get default PID file path in ~/.mcpdog directory
+   */
+  private getDefaultPidFile(): string {
+    return path.join(this.mcpdogDir, 'mcpdog.pid');
+  }
 
   async execute(args: string[], options: Record<string, any>): Promise<void> {
     if (options.help) {
@@ -27,7 +40,7 @@ export class ProxyCommand {
 
   private async startStdioMode(options: Record<string, any>): Promise<void> {
     const daemonPort = parseInt(options['daemon-port']) || 9999;
-    const pidFile = options['pid-file'] || 'mcpdog.pid';
+    const pidFile = options['pid-file'] || this.getDefaultPidFile();
     
     try {
       // Check if daemon is running, auto-start if not
