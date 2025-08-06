@@ -131,7 +131,7 @@ npx mcpdog@latest daemon stop
 
 ---
 
-**🎯 The MCPDog Advantage: Configure Once, Manage Everything!**
+**🎯 Configure Once, Manage Everything!**
 
 ## 📖 Usage Guide
 
