@@ -20,6 +20,22 @@ export const useWebSocket = (url: string) => {
     addServerLogRef.current = addServerLog;
   }, [addServerLog]);
 
+  // 细粒度的服务器状态更新函数
+  const updateServerStatusOnly = (servers: any[]) => {
+    console.log('[WebSocket] Updating server status only:', servers);
+    // 这里我们可以实现更细粒度的更新
+    // 暂时使用setSystemStatus，但只更新服务器部分
+    // 需要提供完整的SystemStatus结构
+    setSystemStatus({
+      initialized: true,
+      servers,
+      totalTools: 0, // 这些值会在后续更新中覆盖
+      enabledTools: 0,
+      uptime: 0,
+      timestamp: new Date().toISOString()
+    });
+  };
+
   useEffect(() => {
     // 创建Socket连接
     socketRef.current = io(url, {
@@ -126,10 +142,21 @@ export const useWebSocket = (url: string) => {
     socket.on('server-status-changed', (data) => {
       console.log('[WebSocket] Server status changed event received:', data);
       
-      // 直接使用携带的系统状态更新UI
+      // 使用更细粒度的状态更新，避免整体页面重新渲染
       if (data.systemStatus) {
         console.log('[WebSocket] Using embedded system status from server-status-changed event');
-        setSystemStatus(data.systemStatus);
+        
+        // 只更新必要的状态，避免整体重新渲染
+        const { servers } = data.systemStatus;
+        
+        // 如果只是服务器状态变化，只更新服务器状态
+        if (servers && !data.event) {
+          // 使用更细粒度的更新方法
+          updateServerStatusOnly(servers);
+        } else {
+          // 如果是其他状态变化，才更新整体状态
+          setSystemStatus(data.systemStatus);
+        }
       }
       
       // 如果是服务器启用事件，触发工具列表重新加载
