@@ -11,7 +11,7 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   MCP Clients   │    │   MCP Clients   │    │   MCP Clients   │
+│   MCP Client:   │    │   MCP Client:   │    │   MCP Client:   │
 │     (Claude)    │    │    (Cursor)     │    │   (Gemini CLI)  │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
