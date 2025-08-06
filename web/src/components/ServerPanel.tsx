@@ -45,6 +45,7 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
     setEditedConfig(server);
     setIsEditing(false);
     setNameValidation({ valid: true });
+    setActiveTab('tools'); // Switch to Tool List tab when server changes
   }, [server.name]); // Use server.name as dependency to detect server changes
 
   // Validate server name
