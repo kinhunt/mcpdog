@@ -14,11 +14,16 @@ export const ServerListItem: React.FC<ServerListItemProps> = React.memo(({ serve
   return (
     <div
       key={server.name}
-      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-        selectedServer === server.name ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
+        selectedServer === server.name ? 'bg-blue-50' : ''
       }`}
       onClick={() => setSelectedServer(server.name)}
     >
+      {/* Blue border for selected item */}
+      {selectedServer === server.name && (
+        <div className="absolute top-0 right-0 bottom-0 w-1 bg-blue-500"></div>
+      )}
+      
       <div className="flex items-center space-x-3 mb-2">
         <div className={`w-3 h-3 rounded-full ${
           server?.connected ? 'bg-green-500' : 

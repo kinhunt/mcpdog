@@ -199,8 +199,26 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       const data = await response.json();
       console.log('[ConfigStore] Tool toggle API response:', data);
       
-      // Don't auto-reload, let caller decide if reload is needed
-      // This avoids UI flickering and tool disappearance issues
+      // Update local state immediately after successful toggle
+      set(state => ({
+        servers: state.servers.map(server => 
+          server.name === serverName 
+            ? {
+                ...server,
+                tools: server.tools?.map(tool => 
+                  tool.name === toolName 
+                    ? { ...tool, enabled: !tool.enabled }
+                    : tool
+                ),
+                enabledToolCount: server.tools?.reduce((count, tool) => 
+                  count + (tool.name === toolName ? (!tool.enabled ? 1 : 0) : (tool.enabled ? 1 : 0)), 0
+                ) || 0
+              }
+            : server
+        )
+      }));
+      
+      console.log('[ConfigStore] Tool toggle state updated locally');
     } catch (error) {
       console.error('[ConfigStore] Error toggling tool:', error);
       set({ error: (error as Error).message });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Settings, 
   Trash2, 
@@ -39,6 +39,13 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
     removeServer, 
     saving 
   } = useConfigStore();
+
+  // Reset editing state when server changes
+  useEffect(() => {
+    setEditedConfig(server);
+    setIsEditing(false);
+    setNameValidation({ valid: true });
+  }, [server.name]); // Use server.name as dependency to detect server changes
 
   // Validate server name
   const validateServerName = (name: string) => {
