@@ -235,7 +235,11 @@ MCPDog uses configuration files to store server settings:
 - **Local**: `./mcpdog.config.json`
 - **Custom**: Specify with `--config` flag
 
-> **Tip**: The default configuration file is stored in `~/.mcpdog/` directory. This is the recommended location for storing your server configurations.
+> **Tip**: The default configuration file is stored in the `~/.mcpdog/` directory:
+> - **macOS/Linux**: `/Users/username/.mcpdog/`
+> - **Windows**: `C:\Users\username\.mcpdog\`
+> 
+> This is the recommended location for storing your server configurations across all platforms.
 
 ### Configuration Format
 ```json
