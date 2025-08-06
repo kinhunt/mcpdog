@@ -40,9 +40,9 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
 - **🛡️ Fault Tolerance**: If one server fails, others continue working
 - **🎯 Simplified Workflow**: No need to configure each server separately in your client
 
-![Uploading 截屏2025-08-07 07.34.25.png…]()
+<img width="925" height="738" alt="Manage servers" src="https://github.com/user-attachments/assets/58edd321-3f23-4a3f-a85e-691c8eae175d" />
 
-![Uploading 截屏2025-08-07 07.35.25.png…]()
+<img width="933" height="722" alt="logging" src="https://github.com/user-attachments/assets/00200247-b04f-4cd5-a84b-8fbb047ecdd6" />
 
 
 ## 🎯 What MCPDog Does
