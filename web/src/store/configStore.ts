@@ -141,7 +141,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
                   // Reset tool count when disabling
                   toolCount: newEnabled ? server.toolCount : 0,
                   enabledToolCount: newEnabled ? server.enabledToolCount : 0,
-                  // When disabling, also set all tools to disabled to ensure correct global count
+                  // When disabling, set all tools to disabled to ensure correct global count
+                  // When enabling, keep original tool states (they will be restored by WebSocket updates)
                   tools: newEnabled ? server.tools : (server.tools?.map(tool => ({ ...tool, enabled: false })) || [])
                 }
               : server
@@ -306,6 +307,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
                 connected: updates.connected !== undefined ? updates.connected : server.connected,
                 toolCount: updates.toolCount !== undefined ? updates.toolCount : server.toolCount,
                 enabledToolCount: updates.enabledToolCount !== undefined ? updates.enabledToolCount : server.enabledToolCount,
+                // When server connects, we need to reload tools to restore their enabled state
+                // This will be handled by the WebSocket routes-updated event
               }
             : server
           : server

@@ -133,6 +133,12 @@ export const useWebSocket = (url: string) => {
         setTimeout(() => {
           socket.emit('request-status');
         }, 1000);
+        
+        // 重新加载配置以恢复工具状态
+        setTimeout(() => {
+          console.log('[WebSocket] Reloading config to restore tool states after server connection');
+          loadConfig();
+        }, 2000); // 2秒延迟，确保服务器完全启动并加载工具
       }
       
       // 记录事件
