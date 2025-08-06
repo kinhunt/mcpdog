@@ -134,7 +134,7 @@ export const useWebSocket = (url: string) => {
       
       // 如果是服务器启用事件，触发工具列表重新加载
       if (data.event === 'server-connected' || data.event === 'server-enabled') {
-        console.log('[WebSocket] Server enabled/connected, requesting status update to refresh tools');
+        console.log('[WebSocket] Server enabled/connected, waiting for tools to load');
         
         let retryCount = 0;
         const maxRetries = 3;
@@ -163,10 +163,8 @@ export const useWebSocket = (url: string) => {
           retryCount++;
           console.log(`[WebSocket] Checking tools for server ${data.serverName}, attempt ${retryCount}/${maxRetries}`);
           
-          // 只在第一次检查时请求状态，避免频繁更新
-          if (retryCount === 1) {
-            socket.emit('request-status');
-          }
+          // 完全避免主动请求状态，依赖自然的状态更新
+          // 这样可以减少页面闪烁
           
           if (retryCount < maxRetries) {
             // 如果还有重试机会，继续等待
