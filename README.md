@@ -12,21 +12,21 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   MCP Clients   │    │   MCP Clients   │    │   MCP Clients   │
-│ (Claude, Cursor)│    │ (Claude, Cursor)│    │ (Claude, Cursor)│
+│     (Claude)    │    │    (Cursor)     │    │   (Gemini CLI)  │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
           └──────────────────────┼──────────────────────┘
                                  │
                     ┌─────────────▼─────────────┐
-                    │      MCPDog Proxy         │
+                    │         MCPDog            │
                     │   (Single Entry Point)    │
                     └────────────┬──────────────┘
                                  │
           ┌──────────────────────┼──────────────────────┐
           │                      │                      │
     ┌─────▼─────┐         ┌──────▼──────┐         ┌─────▼─────┐
-    │ MCP Server│         │ MCP Server  │         │ MCP Server│
-    │(Playwright)│         │(Filesystem) │         │(Puppeteer)│
+    │MCP Server:│         │ MCP Server: │         │MCP Server:│
+    │Playwright │         │ Filesystem  │         │ Puppeteer │
     └───────────┘         └─────────────┘         └───────────┘
 ```
 
