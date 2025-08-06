@@ -103,21 +103,15 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     }
   },
 
-  updateServerConfig: (serverName: string, updates: Partial<ServerWithTools>) => {
-    console.log('[ConfigStore] Updating server config for', serverName, updates);
+  updateServerConfig: (serverName: string, config: Partial<ServerWithTools>) => {
+    console.log('[ConfigStore] Updating server config:', serverName, config);
     set(state => ({
-      config: state.config ? {
-        ...state.config,
-        servers: {
-          ...state.config.servers,
-          [serverName]: { ...state.config.servers[serverName], ...updates }
-        }
-      } : null,
       servers: state.servers.map(server => 
-        server.name === serverName ? { ...server, ...updates } : server
+        server.name === serverName 
+          ? { ...server, ...config }
+          : server
       )
     }));
-    console.log('[ConfigStore] Server config updated locally.');
   },
 
   toggleServer: async (serverName: string, refreshToolsCallback?: () => void) => {
@@ -140,7 +134,9 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
                   connected: newEnabled ? server.connected : false,
                   // Reset tool count when disabling
                   toolCount: newEnabled ? server.toolCount : 0,
-                  enabledToolCount: newEnabled ? server.enabledToolCount : 0,
+                  // Calculate enabledToolCount based on actual tool states
+                  enabledToolCount: newEnabled ? 
+                    (server.tools?.filter(tool => tool.enabled).length || 0) : 0,
                   // When disabling, set all tools to disabled to ensure correct global count
                   // When enabling, keep original tool states (they will be restored by WebSocket updates)
                   tools: newEnabled ? server.tools : (server.tools?.map(tool => ({ ...tool, enabled: false })) || [])
@@ -213,9 +209,12 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
                     ? { ...tool, enabled: !tool.enabled }
                     : tool
                 ),
-                enabledToolCount: server.tools?.reduce((count, tool) => 
-                  count + (tool.name === toolName ? (!tool.enabled ? 1 : 0) : (tool.enabled ? 1 : 0)), 0
-                ) || 0
+                // Calculate enabledToolCount based on actual tool states
+                enabledToolCount: server.tools?.map(tool => 
+                  tool.name === toolName 
+                    ? { ...tool, enabled: !tool.enabled }
+                    : tool
+                ).filter(tool => tool.enabled).length || 0
               }
             : server
         )
@@ -239,16 +238,33 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         body: JSON.stringify({ name: serverName, config })
       });
       
-      if (!response.ok) throw new Error('Failed to add server');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add server');
+      }
       
       const data = await response.json();
       console.log('[ConfigStore] Add server API response:', data);
-      await get().loadConfig(); // Reload config
-      set({ saving: false, showAddServerModal: false });
-      console.log('[ConfigStore] Server added and config reloaded.');
+      
+      // Update local state directly instead of reloading all config
+      set(state => ({
+        servers: [...state.servers, {
+          ...config,
+          name: serverName,
+          connected: false,
+          toolCount: 0,
+          enabledToolCount: 0,
+          tools: []
+        }],
+        saving: false,
+        showAddServerModal: false
+      }));
+      
+      console.log('[ConfigStore] Server added to local state.');
     } catch (error) {
       console.error('[ConfigStore] Error adding server:', error);
       set({ error: (error as Error).message, saving: false });
+      throw error; // Re-throw for modal to handle
     }
   },
 
@@ -260,16 +276,26 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         method: 'DELETE'
       });
       
-      if (!response.ok) throw new Error('Failed to remove server');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove server');
+      }
       
       const data = await response.json();
       console.log('[ConfigStore] Remove server API response:', data);
-      await get().loadConfig(); // Reload config
-      set({ saving: false, selectedServer: null });
-      console.log('[ConfigStore] Server removed and config reloaded.');
+      
+      // Update local state directly instead of reloading all config
+      set(state => ({
+        servers: state.servers.filter(server => server.name !== serverName),
+        saving: false,
+        selectedServer: state.selectedServer === serverName ? null : state.selectedServer
+      }));
+      
+      console.log('[ConfigStore] Server removed from local state.');
     } catch (error) {
       console.error('[ConfigStore] Error removing server:', error);
       set({ error: (error as Error).message, saving: false });
+      throw error; // Re-throw for component to handle
     }
   },
 

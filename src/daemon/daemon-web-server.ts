@@ -589,11 +589,6 @@ export class DaemonWebServer {
     try {
       const { name, config } = req.body;
       const configManager = this.daemon['configManager'];
-      
-      // Basic validation
-      if (!name || !config) {
-        return res.status(400).json({ error: 'Invalid server configuration provided' });
-      }
 
       // Validate server name
       const nameValidation = ServerNameValidator.validateServerName(name);
@@ -613,19 +608,37 @@ export class DaemonWebServer {
         });
       }
 
-      // Remove name from config to avoid duplication
-      const { name: _, ...serverConfig } = config;
-
       try {
-        configManager.addServer(name, serverConfig);
+        // Add the server
+        configManager.addServer(name, config);
         await configManager.saveConfig();
-        await this.daemon['reloadConfig']();
+        await configManager.loadConfig();
         
-        // Rely on daemon events to broadcast status update
-        res.status(201).json({ 
+        // Only start the server if it's enabled, without reloading all config
+        if (config.enabled) {
+          console.log(`[DAEMON-WEB] Server ${name} is enabled, starting it directly`);
+          // Use configManager's toggleServer method to start the server
+          configManager.toggleServer(name, true);
+        } else {
+          console.log(`[DAEMON-WEB] Server ${name} is disabled, skipping start`);
+        }
+
+        // Emit a server-added event for the specific server
+        const systemStatus = this.getSystemStatus();
+        if (systemStatus) {
+          this.io.emit('server-status-changed', {
+            event: 'server-added',
+            serverName: name,
+            systemStatus: systemStatus,
+            originalData: { name, ...config },
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        res.json({ 
           success: true, 
           message: `Server ${name} added successfully`,
-          server: { name, ...serverConfig }
+          server: { name, ...config }
         });
       } catch (error) {
         res.status(500).json({
@@ -668,9 +681,57 @@ export class DaemonWebServer {
       }
 
       try {
+        // Get the old server config to check if it was enabled
+        const oldConfig = configManager.getServerConfig(name);
+        const wasEnabled = oldConfig?.enabled || false;
+        const nameChanged = serverConfig.name && serverConfig.name !== name;
+        
+        // Update the server configuration
         configManager.updateServer(name, serverConfig);
         await configManager.saveConfig();
-        await this.daemon['reloadConfig']();
+        await configManager.loadConfig();
+        
+        // Get the new server config
+        const newConfig = configManager.getServerConfig(serverConfig.name || name);
+        const isEnabled = newConfig?.enabled || false;
+        
+        // Always restart the server if it was enabled, regardless of what changed
+        // This ensures any config change (command, args, env, etc.) takes effect
+        if (wasEnabled) {
+          console.log(`[DAEMON-WEB] Server ${name} config updated, restarting server`);
+          
+          if (nameChanged) {
+            // Name changed: disable old server and enable new server
+            console.log(`[DAEMON-WEB] Disabling old server: ${name}`);
+            configManager.toggleServer(name, false);
+            
+            console.log(`[DAEMON-WEB] Enabling new server: ${serverConfig.name}`);
+            configManager.toggleServer(serverConfig.name, true);
+          } else {
+            // Config changed but name is the same: restart the server
+            console.log(`[DAEMON-WEB] Restarting server ${name} due to config change`);
+            configManager.toggleServer(name, false);
+            configManager.toggleServer(name, true);
+          }
+        } else if (wasEnabled !== isEnabled) {
+          // Only enabled status changed
+          console.log(`[DAEMON-WEB] Toggling server ${serverConfig.name || name} to ${isEnabled}`);
+          configManager.toggleServer(serverConfig.name || name, isEnabled);
+        } else {
+          console.log(`[DAEMON-WEB] Server ${name} updated but was not enabled, no restart needed`);
+        }
+
+        // Emit a server-updated event for the specific server
+        const systemStatus = this.getSystemStatus();
+        if (systemStatus) {
+          this.io.emit('server-status-changed', {
+            event: 'server-updated',
+            serverName: serverConfig.name || name,
+            systemStatus: systemStatus,
+            originalData: { name: serverConfig.name || name, ...serverConfig },
+            timestamp: new Date().toISOString()
+          });
+        }
 
         // Rely on daemon events to broadcast status update
         res.json({ 
@@ -697,9 +758,34 @@ export class DaemonWebServer {
       const { name } = req.params;
       const configManager = this.daemon['configManager'];
 
+      // Get the server config before removing it to check if it was enabled
+      const serverConfig = configManager.getServerConfig(name);
+      const wasEnabled = serverConfig?.enabled || false;
+
       await configManager.removeServer(name);
       await configManager.saveConfig();
-      await this.daemon['reloadConfig']();
+      await configManager.loadConfig();
+      
+      // Only stop the server if it was enabled, without reloading all config
+      if (wasEnabled) {
+        console.log(`[DAEMON-WEB] Server ${name} was enabled, stopping it directly`);
+        // Use configManager's toggleServer method to stop the server
+        configManager.toggleServer(name, false);
+      } else {
+        console.log(`[DAEMON-WEB] Server ${name} was disabled, skipping stop`);
+      }
+
+      // Emit a server-removed event for the specific server
+      const systemStatus = this.getSystemStatus();
+      if (systemStatus) {
+        this.io.emit('server-status-changed', {
+          event: 'server-removed',
+          serverName: name,
+          systemStatus: systemStatus,
+          originalData: { name },
+          timestamp: new Date().toISOString()
+        });
+      }
 
       // Rely on daemon events to broadcast status update
       res.json({ success: true, message: `Server ${name} removed successfully` });

@@ -238,12 +238,12 @@ export const AddServerModal: React.FC = () => {
       }
 
       if (conflictNames.length > 0) {
-        setJsonError(`The following server names already exist: ${conflictNames.join(', ')}`);
+        setJsonError(`❌ Server name conflict detected!\n\nThe following server names already exist:\n${conflictNames.map(name => `• ${name}`).join('\n')}\n\nPlease choose different names for these servers.`);
         return;
       }
 
       if (errors.length > 0) {
-        setJsonError(errors.join('\n'));
+        setJsonError(`❌ Configuration errors found:\n\n${errors.join('\n')}`);
         return;
       }
 
@@ -270,7 +270,12 @@ export const AddServerModal: React.FC = () => {
         hideAddServer();
       } catch (error) {
         console.error('Failed to add servers:', error);
-        setJsonError(`Failed to add server: ${(error as Error).message}`);
+        const errorMessage = (error as Error).message;
+        if (errorMessage.includes('already exists')) {
+          setJsonError(`❌ Server name conflict!\n\nA server with this name already exists. Please choose a different name.`);
+        } else {
+          setJsonError(`❌ Failed to add server:\n\n${errorMessage}`);
+        }
       }
     } else {
       // Form mode processing
@@ -289,7 +294,7 @@ export const AddServerModal: React.FC = () => {
         const existingNames = Object.keys(await response.json());
         
         if (existingNames.includes(serverName.trim())) {
-          alert('Server name already exists, please choose another name');
+          alert(`❌ Server name "${serverName.trim()}" already exists!\n\nPlease choose a different name.`);
           return;
         }
       } catch (error) {
@@ -308,7 +313,12 @@ export const AddServerModal: React.FC = () => {
         hideAddServer();
       } catch (error) {
         console.error('Failed to add server:', error);
-        alert(`Failed to add server: ${(error as Error).message}`);
+        const errorMessage = (error as Error).message;
+        if (errorMessage.includes('already exists')) {
+          alert(`❌ Server name conflict!\n\nA server named "${serverName}" already exists. Please choose a different name.`);
+        } else {
+          alert(`❌ Failed to add server:\n\n${errorMessage}`);
+        }
       }
     }
   };

@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { Plus, Settings, Copy } from 'lucide-react';
+import { Plus, Copy, Settings } from 'lucide-react';
 import { useConfigStore } from '../store/configStore';
-import { useAppStore } from '../store/useAppStore'; // Import useAppStore
+import { useAppStore } from '../store/useAppStore';
+import { ServerListItem } from './ServerListItem';
 import { ServerPanel } from './ServerPanel';
 import { AddServerModal } from './AddServerModal';
 import { ClientConfigModal } from './ClientConfigModal';
-import { ServerStatus } from '../types'; // Import ServerStatus
-import { ServerListItem } from './ServerListItem';
+import { ServerStatus } from '../types/index';
 
 interface ServerManagerProps {
   refreshServerTools: (serverName?: string) => void;
@@ -14,27 +14,25 @@ interface ServerManagerProps {
 
 export const ServerManager: React.FC<ServerManagerProps> = ({ refreshServerTools }) => {
   const {
-    servers: configuredServers, // Rename to avoid conflict
+    servers: configuredServers,
     selectedServer,
+    setSelectedServer,
     loading,
     error,
+    showAddServer,
+    showClientConfig,
     showAddServerModal,
     showClientConfigModal,
     loadConfig,
-    setSelectedServer,
-    showAddServer,
-    showClientConfig
   } = useConfigStore();
+
+  // Load config on component mount
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const { systemStatus } = useAppStore(); // Get systemStatus from useAppStore
   const liveServers = systemStatus?.servers || []; // Extract live servers
-
-  
-
-  useEffect(() => {
-    // Initial load of configured servers
-    loadConfig();
-  }, [loadConfig]);
 
   // Merge configured servers with live status
   const mergedServers = configuredServers.map(configServer => {
@@ -42,7 +40,9 @@ export const ServerManager: React.FC<ServerManagerProps> = ({ refreshServerTools
     return {
       ...configServer,
       connected: liveServer?.connected ?? configServer.connected, // Use live status if available
-      toolCount: liveServer?.toolCount ?? configServer.toolCount // Use live toolCount if available
+      toolCount: liveServer?.toolCount ?? configServer.toolCount, // Use live toolCount if available
+      enabledToolCount: liveServer?.enabledToolCount ?? configServer.enabledToolCount, // Use live enabledToolCount if available
+      tools: liveServer?.tools ?? configServer.tools // Use live tools if available
     };
   });
 
@@ -74,9 +74,10 @@ export const ServerManager: React.FC<ServerManagerProps> = ({ refreshServerTools
   const connectedServersCount = mergedServers.filter(s => s?.connected).length;
   const enabledServersCount = mergedServers.filter(s => s?.enabled).length;
   
-  // Calculate enabled tools count
+  // Calculate enabled tools count - only count tools from enabled and connected servers
   const enabledToolsCount = mergedServers.reduce((sum, s) => {
-    if (!s?.tools) return sum;
+    // Only count tools from servers that are both enabled and connected
+    if (!s?.enabled || !s?.connected || !s?.tools) return sum;
     return sum + s.tools.filter(tool => tool.enabled).length;
   }, 0);
 

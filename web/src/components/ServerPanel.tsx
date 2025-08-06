@@ -4,8 +4,6 @@ import {
   Trash2, 
   Save, 
   RefreshCw, 
-  Eye, 
-  EyeOff,
   ToggleLeft,
   ToggleRight,
   Loader2,
@@ -29,7 +27,6 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
   const [activeTab, setActiveTab] = useState<'config' | 'tools' | 'logs'>('tools');
   const [isEditing, setIsEditing] = useState(false);
   const [editedConfig, setEditedConfig] = useState<any>(server);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [nameValidation, setNameValidation] = useState<{ valid: boolean; error?: string; suggestions?: string[] }>({ valid: true });
   
@@ -52,7 +49,6 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
   useEffect(() => {
     if (activeTab === 'config') {
       setIsEditing(true);
-      setShowAdvanced(true);
     }
   }, [activeTab]);
 
@@ -187,7 +183,12 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update server');
+        if (errorData.error === 'Server name already exists') {
+          alert(`❌ Server name conflict!\n\nA server named "${cleanedConfig.name}" already exists. Please choose a different name.`);
+        } else {
+          throw new Error(errorData.error || errorData.message || 'Failed to update server');
+        }
+        return;
       }
       
       const result = await response.json();
@@ -202,14 +203,8 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update server config:', error);
-      alert(`Failed to save configuration: ${(error as Error).message}`);
+      alert(`❌ Failed to save configuration:\n\n${(error as Error).message}`);
     }
-  };
-
-  const handleCancel = () => {
-    setEditedConfig(server);
-    setIsEditing(false);
-    setNameValidation({ valid: true });
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -305,42 +300,7 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
         <div className="flex items-center space-x-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {isEditing ? (
-                <div>
-                  <input
-                    type="text"
-                    value={editedConfig.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`text-xl font-bold border rounded px-2 py-1 ${
-                      nameValidation.valid 
-                        ? 'border-gray-300 focus:border-blue-500' 
-                        : 'border-red-300 focus:border-red-500'
-                    }`}
-                  />
-                  {!nameValidation.valid && (
-                    <div className="mt-1 text-red-600 text-sm">
-                      {nameValidation.error}
-                      {nameValidation.suggestions && nameValidation.suggestions.length > 0 && (
-                        <div className="mt-1">
-                          <span className="text-gray-600">Suggestions: </span>
-                          {nameValidation.suggestions.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleInputChange('name', suggestion)}
-                              className="text-blue-600 hover:text-blue-800 underline mr-2"
-                            >
-                              {suggestion}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                server?.name
-              )}
+              {server?.name}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               {server?.description || 'No description'}
@@ -349,6 +309,16 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Delete button */}
+          <button
+            onClick={handleRemoveServer}
+            className="p-3 rounded-md transition-colors text-red-600 hover:bg-red-100"
+            title="Delete server"
+          >
+            <Trash2 className="h-8 w-8" />
+          </button>
+          
+          {/* Toggle server button */}
           <button
             onClick={handleToggleServer}
             className={`p-3 rounded-md transition-colors ${
@@ -401,14 +371,6 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-gray-900">Server Configuration</h3>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="btn-secondary btn-sm flex items-center space-x-2"
-                >
-                  {showAdvanced ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>{showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}</span>
-                </button>
-                
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
@@ -417,22 +379,14 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
                     Edit Configuration
                   </button>
                 ) : (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleCancel}
-                      className="btn-secondary btn-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving || !nameValidation.valid}
-                      className="btn-primary btn-sm flex items-center space-x-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>{saving ? 'Saving...' : 'Save'}</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !nameValidation.valid}
+                    className="btn-primary btn-sm flex items-center space-x-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>{saving ? 'Saving...' : 'Save'}</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -594,54 +548,49 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
                 )}
               </div>
 
-              {/* Advanced options */}
-              {showAdvanced && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-4">Advanced Options</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Timeout (ms)
-                      </label>
-                      <input
-                        type="number"
-                        value={editedConfig.timeout || ''}
-                        onChange={(e) => handleInputChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-md disabled:bg-gray-100"
-                        placeholder="30000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Retries
-                      </label>
-                      <input
-                        type="number"
-                        value={editedConfig.retries || ''}
-                        onChange={(e) => handleInputChange('retries', e.target.value ? parseInt(e.target.value) : undefined)}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-md disabled:bg-gray-100"
-                        placeholder="3"
-                      />
-                    </div>
+              {/* Advanced options - always show */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-4">Advanced Options</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Timeout (ms)
+                    </label>
+                    <input
+                      type="number"
+                      value={editedConfig.timeout || ''}
+                      onChange={(e) => handleInputChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)}
+                      disabled={!isEditing}
+                      className="w-full p-3 border border-gray-300 rounded-md disabled:bg-gray-100"
+                      placeholder="30000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Retries
+                    </label>
+                    <input
+                      type="number"
+                      value={editedConfig.retries || ''}
+                      onChange={(e) => handleInputChange('retries', e.target.value ? parseInt(e.target.value) : undefined)}
+                      disabled={!isEditing}
+                      className="w-full p-3 border border-gray-300 rounded-md disabled:bg-gray-100"
+                      placeholder="3"
+                    />
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Danger zone */}
+              {/* Save button at bottom */}
               {isEditing && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="font-medium text-red-900 mb-2">Danger Zone</h4>
-                  <p className="text-sm text-red-700 mb-4">
-                    Once you delete a server, there is no going back. Please be certain.
-                  </p>
+                <div className="flex justify-end pt-4 border-t border-gray-200">
                   <button
-                    onClick={handleRemoveServer}
-                    className="btn-danger btn-sm flex items-center space-x-2"
+                    onClick={handleSave}
+                    disabled={saving || !nameValidation.valid}
+                    className="btn-primary btn-sm flex items-center space-x-2"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete Server</span>
+                    <Save className="h-4 w-4" />
+                    <span>{saving ? 'Saving...' : 'Save'}</span>
                   </button>
                 </div>
               )}

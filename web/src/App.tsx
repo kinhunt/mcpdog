@@ -6,7 +6,7 @@ function App() {
   const { connected } = useAppStore();
   
   // 连接WebSocket并获取刷新功能
-  const { refreshServerTools } = useWebSocket(process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : window.location.origin);
+  const { refreshServerTools } = useWebSocket(process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : window.location.origin);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,16 +38,6 @@ function App() {
           <ServerManager refreshServerTools={refreshServerTools} />
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center text-sm text-gray-500">
-            <p>MCPDog v2.0.0 - MCP Server Manager</p>
-            <p>Real-time Monitoring • Configuration Management • Tool Testing</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

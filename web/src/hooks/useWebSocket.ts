@@ -154,66 +154,51 @@ export const useWebSocket = (url: string) => {
       
       // 如果是服务器启用事件，触发工具列表重新加载
       if (data.event === 'server-connected' || data.event === 'server-enabled') {
-        console.log('[WebSocket] Server enabled/connected, waiting for tools to load');
+        console.log('[WebSocket] Server enabled/connected, updating state smoothly');
         
-        let retryCount = 0;
-        const maxRetries = 3;
-        let isResolved = false; // 防止重复处理
+        // 对于enable事件，我们不需要复杂的重试机制
+        // 只需要等待自然的WebSocket更新即可
+        // 这样可以避免不必要的loadConfig调用导致的闪烁
         
-        // 使用更可靠的方法：监听工具更新事件而不是固定延时
-        // 当服务器连接后，等待routes-updated事件来确认工具已加载
-        const handleRoutesUpdated = (routesData: any) => {
-          if (routesData.serverName === data.serverName && !isResolved) {
-            console.log('[WebSocket] Tools updated for reconnected server, updating config silently');
-            isResolved = true;
-            // 静默更新配置，避免页面闪烁
-            loadConfig().catch(error => {
-              console.error('[WebSocket] Failed to reload config:', error);
-            });
-            // 移除事件监听器，避免重复处理
-            socket.off('routes-updated', handleRoutesUpdated);
-            clearTimeout(fallbackTimeout);
-          }
-        };
+        // 如果是server-enabled事件，只需要等待后续的server-connected事件
+        if (data.event === 'server-enabled') {
+          console.log('[WebSocket] Server enabled, waiting for connection event');
+          return; // 不执行任何操作，等待server-connected事件
+        }
         
-        // 监听routes-updated事件
-        socket.on('routes-updated', handleRoutesUpdated);
-        
-        // 主动检查工具状态的函数
-        const checkToolsAndRetry = () => {
-          if (isResolved) return; // 如果已经解决，不再重试
+        // 如果是server-connected事件，说明服务器已经连接，可以更新工具状态
+        if (data.event === 'server-connected') {
+          console.log('[WebSocket] Server connected, updating tool state');
           
-          retryCount++;
-          console.log(`[WebSocket] Checking tools for server ${data.serverName}, attempt ${retryCount}/${maxRetries}`);
-          
-          // 完全避免主动请求状态，依赖自然的状态更新
-          // 这样可以减少页面闪烁
-          
-          if (retryCount < maxRetries) {
-            // 如果还有重试机会，继续等待
-            setTimeout(checkToolsAndRetry, 2000);
-          } else {
-            // 达到最大重试次数，静默重新加载配置
-            console.log('[WebSocket] Max retries reached, silently reloading config');
-            isResolved = true;
-            loadConfig().catch(error => {
-              console.error('[WebSocket] Failed to reload config after max retries:', error);
-            });
-            socket.off('routes-updated', handleRoutesUpdated);
-            clearTimeout(fallbackTimeout);
+          // 使用更平滑的状态更新，避免loadConfig
+          if (data.systemStatus && data.systemStatus.servers) {
+            const { servers } = data.systemStatus;
+            const connectedServer = servers.find((s: any) => s.name === data.serverName);
+            
+            if (connectedServer) {
+              console.log('[WebSocket] Updating server state for connected server:', connectedServer.name);
+              // 直接更新服务器状态，避免loadConfig
+              const { setServers } = useConfigStore.getState();
+              const currentServers = useConfigStore.getState().servers;
+              
+              const updatedServers = currentServers.map(server => 
+                server.name === connectedServer.name 
+                  ? {
+                      ...server,
+                      connected: connectedServer.connected,
+                      toolCount: connectedServer.toolCount,
+                      enabledToolCount: connectedServer.enabledToolCount,
+                      // 保持原有的工具状态，避免重置
+                      tools: server.tools || []
+                    }
+                  : server
+              );
+              
+              setServers(updatedServers);
+              console.log('[WebSocket] Server state updated smoothly without loadConfig');
+            }
           }
-        };
-        
-        // 设置超时作为备用方案，如果5秒内没有收到routes-updated事件
-        const fallbackTimeout = setTimeout(() => {
-          if (!isResolved) {
-            console.log('[WebSocket] Timeout reached, starting retry mechanism');
-            checkToolsAndRetry();
-          }
-        }, 3000);
-        
-        // 延迟开始第一次检查，给服务器更多时间启动
-        setTimeout(checkToolsAndRetry, 2000);
+        }
       }
       
       // 记录事件
