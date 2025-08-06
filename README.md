@@ -1,6 +1,6 @@
 # MCPDog 🐕
 
-> **Universal MCP Server Manager - Your Gateway to Multiple MCP Servers**
+> **Universal MCP Server Manager - Configure Once, Manage Everything!**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
