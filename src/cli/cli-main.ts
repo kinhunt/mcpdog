@@ -79,11 +79,10 @@ async function main() {
     const finalCommand = command || 'proxy';
     const finalArgs = command ? args : [];
     
+    // In auto mode (no command specified), suppress all output to avoid MCP client errors
     if (!command) {
-      // In auto mode, don't output colored text to avoid MCP client errors
-      if (!values.json && !values['no-color']) {
-        CLIUtils.info('🚀 Starting MCPDog in auto mode (proxy + daemon)...');
-      }
+      // Don't output anything in auto mode to avoid MCP client parsing errors
+      // The proxy command will handle all the necessary startup logic silently
     }
     
     if (!command && values.help) {

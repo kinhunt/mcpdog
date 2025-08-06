@@ -74,12 +74,8 @@ export class ProxyCommand {
   private async startWebMode(options: Record<string, any>): Promise<void> {
     const port = parseInt(options['web-port']);
     
-    // Deprecated Web mode, prompt user to use daemon
-    CLIUtils.warn('--web-port option is deprecated, please use daemon mode:');
-    CLIUtils.info(`  mcpdog daemon start --web-port ${port}`);
-    CLIUtils.info('Currently starting in stdio mode, connecting to daemon...');
-    
-    // Switch to stdio mode
+    // In MCP mode, suppress all output to avoid JSON parsing errors
+    // Just switch to stdio mode silently
     await this.startStdioMode(options);
   }
 
