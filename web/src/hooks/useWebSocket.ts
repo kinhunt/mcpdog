@@ -23,17 +23,10 @@ export const useWebSocket = (url: string) => {
   // 细粒度的服务器状态更新函数
   const updateServerStatusOnly = (servers: any[]) => {
     console.log('[WebSocket] Updating server status only:', servers);
-    // 这里我们可以实现更细粒度的更新
-    // 暂时使用setSystemStatus，但只更新服务器部分
-    // 需要提供完整的SystemStatus结构
-    setSystemStatus({
-      initialized: true,
-      servers,
-      totalTools: 0, // 这些值会在后续更新中覆盖
-      enabledTools: 0,
-      uptime: 0,
-      timestamp: new Date().toISOString()
-    });
+    // 直接更新Zustand store，避免调用setSystemStatus导致的闪烁
+    // 这里我们可以直接更新configStore中的servers状态
+    const { setServers } = useConfigStore.getState();
+    setServers(servers);
   };
 
   useEffect(() => {
@@ -171,9 +164,12 @@ export const useWebSocket = (url: string) => {
         // 当服务器连接后，等待routes-updated事件来确认工具已加载
         const handleRoutesUpdated = (routesData: any) => {
           if (routesData.serverName === data.serverName && !isResolved) {
-            console.log('[WebSocket] Tools updated for reconnected server, reloading config');
+            console.log('[WebSocket] Tools updated for reconnected server, updating config silently');
             isResolved = true;
-            loadConfig();
+            // 静默更新配置，避免页面闪烁
+            loadConfig().catch(error => {
+              console.error('[WebSocket] Failed to reload config:', error);
+            });
             // 移除事件监听器，避免重复处理
             socket.off('routes-updated', handleRoutesUpdated);
             clearTimeout(fallbackTimeout);
@@ -197,10 +193,12 @@ export const useWebSocket = (url: string) => {
             // 如果还有重试机会，继续等待
             setTimeout(checkToolsAndRetry, 2000);
           } else {
-            // 达到最大重试次数，强制重新加载配置
-            console.log('[WebSocket] Max retries reached, forcing config reload');
+            // 达到最大重试次数，静默重新加载配置
+            console.log('[WebSocket] Max retries reached, silently reloading config');
             isResolved = true;
-            loadConfig();
+            loadConfig().catch(error => {
+              console.error('[WebSocket] Failed to reload config after max retries:', error);
+            });
             socket.off('routes-updated', handleRoutesUpdated);
             clearTimeout(fallbackTimeout);
           }
