@@ -52,12 +52,13 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
 
 ### Key Benefits of This Architecture:
 
-- **🔗 Single Connection**: Multiple MCP clients connect to one MCPDog instance
+- **🔗 One-Time Setup**: Configure MCPDog once, use all servers
 - **🔄 Unified Interface**: All MCP servers appear as one server to clients
 - **⚡ Smart Routing**: MCPDog routes tool calls to the appropriate server
 - **🌐 Protocol Flexibility**: Supports stdio, HTTP SSE, and Streamable HTTP
-- **📊 Centralized Management**: Monitor and manage all servers from one place
+- **📊 Centralized Management**: Monitor and manage all servers from web dashboard
 - **🛡️ Fault Tolerance**: If one server fails, others continue working
+- **🎯 Simplified Workflow**: No need to configure each server separately in your client
 
 ## 🎯 What MCPDog Does
 
@@ -76,27 +77,9 @@ MCPDog acts as a **proxy layer** that combines multiple MCP servers into one uni
 - Node.js >= 18
 - An MCP client (Claude Desktop, Cursor, etc.)
 
-### Step 1: Start MCPDog (Optional)
-```bash
-# Start MCPDog daemon with web interface (optional)
-npx mcpdog@latest daemon start --web-port 3000
-```
+### Step 1: Configure Your MCP Client
 
-> **Note**: You can skip this step if you only want to use MCPDog through your MCP client. The daemon will start automatically when your client connects.
-
-### Step 2: Add Your MCP Servers
-```bash
-# Add a Playwright MCP server
-npx mcpdog@latest config add playwright "npx @playwright/mcp@latest" --auto-detect
-
-# Add a filesystem server
-npx mcpdog@latest config add filesystem "npx @modelcontextprotocol/server-filesystem /tmp" --auto-detect
-
-# Add an HTTP-based server
-npx mcpdog@latest config add api-server https://api.example.com --transport streamable-http
-```
-
-### Step 3: Configure Your MCP Client
+**One-time configuration for all your MCP servers!**
 
 #### For Claude Desktop
 Add this to your Claude Desktop configuration:
@@ -126,16 +109,29 @@ Add this to your Cursor MCP configuration:
 }
 ```
 
-> **Note**: When your MCP client connects to MCPDog, the daemon will automatically start and run in the background. If you need to stop it, manually run `npx mcpdog@latest daemon stop`.
+> **That's it!** Once configured, MCPDog will automatically start when your client connects and manage all your MCP servers for you.
 
-### Step 4: Access Web Dashboard (Optional)
-Open `http://localhost:3000` in your browser to:
-- Monitor server status
-- View available tools
-- Manage server configurations
-- View real-time logs
+### Step 2: Manage Servers via Web Dashboard
 
-> **Note**: The daemon runs in the background and will continue running even after you close your MCP client. To stop it, run `npx mcpdog@latest daemon stop`.
+Open your browser and go to `http://localhost:3000` to:
+- **Add new MCP servers** with a few clicks
+- **Monitor server status** in real-time
+- **Enable/disable tools** as needed
+- **View server logs** and performance metrics
+- **Generate client configurations** for other tools
+
+> **Note**: The daemon runs in the background and will continue running even after you close your MCP client.
+
+### Step 3: Stop MCPDog (Optional)
+
+When you're done, stop the daemon:
+```bash
+npx mcpdog@latest daemon stop
+```
+
+---
+
+**🎯 The MCPDog Advantage: Configure Once, Manage Everything!**
 
 ## 📖 Usage Guide
 
