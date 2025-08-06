@@ -10,11 +10,18 @@
     "dev": "tsx src/index.ts",
     "test": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "web": "node dist/index.js --web-port 3000"
+    "web": "node dist/index.js --web-port 3000",
+    "prepublishOnly": "npm run build"
   },
   "bin": {
     "mcpdog": "./dist/cli/cli-main.js"
   },
+  "files": [
+    "dist/**/*",
+    "web/dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@modelcontextprotocol/server-filesystem": "^2025.7.1",

@@ -1,5 +1,4 @@
 {
-  "version": "2.0.0",
   "servers": {
     "filesystem": {
       "name": "filesystem",
@@ -64,9 +63,18 @@
         "DISABLE_OPENCOLLECTIVE": "true",
         "NO_UPDATE_NOTIFIER": "true"
       },
-      "description": true
+      "description": true,
+      "toolsConfig": {
+        "mode": "blacklist",
+        "toolSettings": {
+          "browser_close": {
+            "enabled": true
+          }
+        }
+      }
     }
   },
+  "version": "2.0.0",
   "logging": {
     "level": "info"
   }

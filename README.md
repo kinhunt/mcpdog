@@ -61,8 +61,24 @@ MCPDog is a comprehensive MCP (Model Context Protocol) server management solutio
 - Node.js >= 18
 - npm or yarn
 
-### Installation
+### Installation & Usage
 
+#### Option 1: Quick Start with npx (Recommended)
+```bash
+# Run directly with npx (no installation required)
+npx mcpdog --version
+
+# Start daemon with web interface
+npx mcpdog daemon start --web-port 3000
+
+# Check status
+npx mcpdog status
+
+# Add servers
+npx mcpdog config add my-server "npx @playwright/mcp@latest" --auto-detect
+```
+
+#### Option 2: Local Installation
 ```bash
 # Clone the repository
 git clone https://github.com/kinhunt/mcpdog.git
@@ -87,6 +103,9 @@ mcpdog daemon start
 
 # Or with custom port
 mcpdog daemon start --web-port 3000
+
+# Or with npx
+npx mcpdog daemon start --web-port 3000
 ```
 
 #### 2. Add MCP Servers

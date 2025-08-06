@@ -1,0 +1,72 @@
+# Source files
+src/
+web/src/
+*.ts
+*.tsx
+
+# Development files
+.git/
+.github/
+.vscode/
+.claude/
+.DS_Store
+
+# Build artifacts (except dist)
+*.log
+*.pid
+daemon.log
+test-web-server.js
+
+# Development dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+vitest.config.ts
+vitest.integration.config.ts
+
+# Documentation (except README and LICENSE)
+docs/
+*.md
+!README.md
+!LICENSE
+
+# Configuration files
+tsconfig.json
+tsconfig.node.json
+tailwind.config.js
+postcss.config.js
+vite.config.ts
+.eslintrc*
+.prettierrc*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+*.log
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml 
