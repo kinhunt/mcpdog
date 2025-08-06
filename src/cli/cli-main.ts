@@ -75,15 +75,22 @@ async function main() {
     // Get command and arguments
     const [command, ...args] = positionals;
     
+    // If no command is provided, default to 'proxy' (auto-start mode)
+    const finalCommand = command || 'proxy';
+    const finalArgs = command ? args : [];
+    
     if (!command) {
-      // No command, show help
+      CLIUtils.info('🚀 Starting MCPDog in auto mode (proxy + daemon)...');
+    }
+    
+    if (!command && values.help) {
       CLIUtils.showGlobalHelp();
       process.exit(0);
     }
 
     // Create router and execute command
     const router = new CLICommandRouter(values.config as string);
-    await router.executeCommand(command, args, values);
+    await router.executeCommand(finalCommand, finalArgs, values);
 
   } catch (error) {
     CLIUtils.error('CLI execution failed:', (error as Error).message);
@@ -100,10 +107,10 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason) => {
-  CLIUtils.error('Unhandled Promise rejection:', String(reason));
+process.on('unhandledRejection', (reason, promise) => {
+  CLIUtils.error('Unhandled rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
 
-// Start CLI
+// Start the CLI
 main();
