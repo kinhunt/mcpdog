@@ -23,6 +23,7 @@ async function main() {
         'web-port': { type: 'string' },
         'daemon-port': { type: 'string' },
         'pid-file': { type: 'string' },
+        port: { type: 'string', short: 'p' },
         // Config command options
         endpoint: { type: 'string' },
         transport: { type: 'string' },

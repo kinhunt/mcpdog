@@ -2,6 +2,7 @@ import { createInterface } from 'readline';
 import { MCPDogServer } from './core/mcpdog-server.js';
 import { MCPDogConfig, MCPMessage, MCPNotification, MCPNotificationRequest, MCPResponse, MCPRequest } from './types/index.js';
 import { ConfigManager } from './config/config-manager.js';
+import { StreamableHttpMCPServer } from './streamable-http-server.js';
 
 export class StdioMCPServer {
   private server: MCPDogServer;
@@ -175,9 +176,9 @@ export class StdioMCPServer {
 }
 
 // Parse command line arguments
-function parseArgs(): { configPath?: string; webPort?: number } {
+function parseArgs(): { configPath?: string; webPort?: number; transport?: string; port?: number } {
   const args = process.argv.slice(2);
-  const result: { configPath?: string; webPort?: number } = {};
+  const result: { configPath?: string; webPort?: number; transport?: string; port?: number } = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -188,6 +189,12 @@ function parseArgs(): { configPath?: string; webPort?: number } {
     } else if (arg === '--web-port') {
       result.webPort = parseInt(args[i + 1], 10);
       i++;
+    } else if (arg === '--transport' || arg === '-t') {
+      result.transport = args[i + 1];
+      i++;
+    } else if (arg === '--port' || arg === '-p') {
+      result.port = parseInt(args[i + 1], 10);
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 MCPDog - Universal MCP Server Manager
@@ -196,13 +203,21 @@ Usage: mcpdog [options]
 
 Options:
   -c, --config <path>     Configuration file path (default: ./mcpdog.config.json)
+  -t, --transport <type>  Transport protocol: stdio (default) or streamable-http
+  -p, --port <port>       Port for HTTP transport (default: 3001)
   --web-port <port>       Enable web interface on port (experimental)
   -h, --help              Show this help message
 
 Examples:
-  mcpdog                                    # Start with default config
+  mcpdog                                    # Start with stdio transport
+  mcpdog --transport streamable-http        # Start with HTTP transport on default port
+  mcpdog --transport streamable-http --port 8080  # Start with HTTP transport on port 8080
   mcpdog --config ./my-config.json         # Use custom config file
   mcpdog --web-port 3000                   # Enable web interface (not yet implemented)
+
+Transport Types:
+  stdio           - Standard input/output (default, for MCP clients like Claude Desktop)
+  streamable-http - HTTP-based transport with optional Server-Sent Events
 
 For more information, visit: https://github.com/kinhunt/mcpdog
       `);
@@ -215,7 +230,7 @@ For more information, visit: https://github.com/kinhunt/mcpdog
 
 // Main program entry point
 async function main(): Promise<void> {
-  const { configPath, webPort } = parseArgs();
+  const { configPath, webPort, transport, port } = parseArgs();
 
   if (webPort) {
     console.error('Web interface not yet implemented');
@@ -225,8 +240,21 @@ async function main(): Promise<void> {
   const configManager = new ConfigManager(configPath);
   await configManager.loadConfig(); // Load config before passing to server
 
-  const mcpServer = new StdioMCPServer(configManager);
-  await mcpServer.start();
+  // Choose transport type
+  const transportType = transport || 'stdio';
+  
+  if (transportType === 'streamable-http') {
+    const httpPort = port || 3001;
+    const httpServer = new StreamableHttpMCPServer(configManager, httpPort);
+    await httpServer.start();
+  } else if (transportType === 'stdio') {
+    const mcpServer = new StdioMCPServer(configManager);
+    await mcpServer.start();
+  } else {
+    console.error(`Unknown transport type: ${transportType}`);
+    console.error('Supported transports: stdio, streamable-http');
+    process.exit(1);
+  }
 }
 
 // Only start server when this file is run directly, not when imported

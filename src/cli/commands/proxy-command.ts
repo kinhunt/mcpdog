@@ -5,6 +5,7 @@
 import { ConfigManager } from '../../config/config-manager.js';
 import { CLIUtils } from '../cli-utils.js';
 import { StdioMCPServer } from '../../index.js';
+import { StreamableHttpMCPServer } from '../../streamable-http-server.js';
 import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
 import path from 'path';
@@ -31,7 +32,12 @@ export class ProxyCommand {
       return;
     }
 
-    if (options['web-port']) {
+    // Check transport type
+    const transport = options.transport || 'stdio';
+    
+    if (transport === 'streamable-http') {
+      await this.startHttpMode(options);
+    } else if (options['web-port']) {
       await this.startWebMode(options);
     } else {
       await this.startStdioMode(options);
@@ -90,6 +96,35 @@ export class ProxyCommand {
     // In MCP mode, suppress all output to avoid JSON parsing errors
     // Just switch to stdio mode silently
     await this.startStdioMode(options);
+  }
+
+  private async startHttpMode(options: Record<string, any>): Promise<void> {
+    const httpPort = parseInt(options.port) || 3001;
+    
+    try {
+      const httpServer = new StreamableHttpMCPServer(this.configManager, httpPort);
+      
+      // Graceful shutdown handling
+      process.on('SIGINT', () => {
+        process.exit(0);
+      });
+      
+      process.on('SIGTERM', () => {
+        process.exit(0);
+      });
+      
+      await httpServer.start();
+      
+      // Prevent command exit from terminating process
+      await new Promise(() => {}); // Wait forever
+
+    } catch (error) {
+      // Only output error on connection failure, then exit immediately
+      // Use process.stderr.write instead of CLIUtils to avoid color codes
+      process.stderr.write(`MCPDog: Failed to start HTTP server on port ${httpPort}\n`);
+      process.stderr.write(`Error: ${(error as Error).message}\n`);
+      process.exit(1);
+    }
   }
 
   /**
@@ -218,28 +253,44 @@ ${CLIUtils.colorize('Usage:', 'yellow')}
   mcpdog proxy [options]
 
 ${CLIUtils.colorize('Options:', 'yellow')}
-  --daemon-port <port>  Connect to daemon on specific port (default: 9999)
+  --transport <type>    Transport protocol: stdio (default) or streamable-http
+  -p, --port <port>     Port for HTTP transport (default: 3001)
+  --daemon-port <port>  Connect to daemon on specific port (default: 9999, stdio mode only)
   --help               Show this help message
 
 ${CLIUtils.colorize('Description:', 'yellow')}
-  This command connects to MCPDog daemon and acts as a proxy for MCP clients 
-  (like Claude Desktop, Cursor, etc.). If no daemon is running, it will 
-  automatically start one with default configuration.
+  This command starts MCPDog and acts as a proxy for MCP clients. It supports
+  both stdio (for traditional MCP clients) and HTTP (for web-based clients).
+
+${CLIUtils.colorize('Transport Types:', 'yellow')}
+  stdio           - Standard input/output (default, for MCP clients like Claude Desktop)
+  streamable-http - HTTP-based transport with JSON-RPC over HTTP
 
 ${CLIUtils.colorize('Examples:', 'yellow')}
-  mcpdog proxy                    # Auto-start daemon and connect on default port
-  mcpdog proxy --daemon-port 9999 # Auto-start daemon and connect on specific port
+  mcpdog proxy                                    # Start with stdio transport
+  mcpdog proxy --transport streamable-http        # Start HTTP server on port 3001
+  mcpdog proxy --transport streamable-http --port 8080  # Start HTTP server on port 8080
+  mcpdog proxy --daemon-port 9999                # Use specific daemon port (stdio only)
 
 ${CLIUtils.colorize('MCP Client Configuration:', 'yellow')}
-  Add this to your MCP client configuration:
+  
+  For stdio transport (Claude Desktop, Cursor):
   {
     "mcpdog": {
       "command": "mcpdog",
       "args": ["proxy"]
     }
   }
+  
+  For HTTP transport:
+  {
+    "mcpdog": {
+      "command": "mcpdog", 
+      "args": ["proxy", "--transport", "streamable-http", "--port", "3001"]
+    }
+  }
 
-${CLIUtils.colorize('Auto-Start Behavior:', 'yellow')}
+${CLIUtils.colorize('Auto-Start Behavior (stdio mode):', 'yellow')}
   • Automatically detects if daemon is running
   • If not running, starts daemon in background with default settings
   • Uses configuration from ${this.configManager.getConfigPath()}

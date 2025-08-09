@@ -35,7 +35,7 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
 - **🔗 One-Time Setup**: Configure MCPDog once, use all servers
 - **🔄 Unified Interface**: All MCP servers appear as one server to clients
 - **⚡ Smart Routing**: MCPDog routes tool calls to the appropriate server
-- **🌐 Protocol Flexibility**: Supports stdio, HTTP SSE, and Streamable HTTP
+- **🌐 Protocol Flexibility**: Supports stdio, HTTP SSE, and Streamable HTTP for both client and server connections
 - **📊 Centralized Management**: Monitor and manage all servers from web dashboard
 - **🛡️ Fault Tolerance**: If one server fails, others continue working
 - **🎯 Simplified Workflow**: No need to configure each server separately in your client
@@ -55,6 +55,27 @@ MCPDog acts as a **proxy layer** that combines multiple MCP servers into one uni
 - **⚡ Auto-Detection** - Automatically detects optimal protocols for each server
 - **🔧 Easy Management** - Add, remove, and configure servers via CLI or web
 - **📊 Real-time Monitoring** - See server status and tool availability in real-time
+- **🌍 Multiple Transports** - Support for both stdio and HTTP-based communication
+
+## ⚡ New: HTTP Transport Support
+
+MCPDog now supports HTTP-based communication in addition to the traditional stdio transport! This enables:
+
+- **Web-based MCP clients** to connect directly via HTTP
+- **Remote MCP access** over network
+- **RESTful health checks** and monitoring
+- **CORS-enabled** browser integration
+
+Quick example:
+```bash
+# Start MCPDog with HTTP transport
+npx mcpdog@latest --transport streamable-http --port 3001
+
+# Test with curl
+curl -X POST http://localhost:3001/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+```
 
 ## 🚀 Quick Start
 
@@ -66,7 +87,7 @@ MCPDog acts as a **proxy layer** that combines multiple MCP servers into one uni
 
 **One-time configuration for all your MCP servers!**
 
-#### For Claude Desktop
+#### For Claude Desktop (stdio transport - recommended)
 Add this to your Claude Desktop configuration:
 ```json
 {
@@ -79,7 +100,7 @@ Add this to your Claude Desktop configuration:
 }
 ```
 
-#### For Cursor
+#### For Cursor (stdio transport - recommended)
 Add this to your Cursor MCP configuration:
 ```json
 {
@@ -89,6 +110,19 @@ Add this to your Cursor MCP configuration:
         "command": "npx",
         "args": ["mcpdog@latest"]
       }
+    }
+  }
+}
+```
+
+#### Alternative: HTTP Transport
+For MCP clients that support HTTP transport:
+```json
+{
+  "mcpServers": {
+    "mcpdog-http": {
+      "command": "npx",
+      "args": ["mcpdog@latest", "proxy", "--transport", "streamable-http", "--port", "3001"]
     }
   }
 }
@@ -269,17 +303,58 @@ MCPDog uses configuration files to store server settings:
 
 ## 🛠️ Supported Transport Protocols
 
-### stdio
+MCPDog supports multiple transport protocols for both client connections and server connections:
+
+### Client Connection Protocols
+
+#### stdio (default)
+- Standard input/output communication
+- Perfect for traditional MCP clients (Claude Desktop, Cursor)
+- Direct process communication with lowest latency
+- Recommended for most use cases
+
+```bash
+# Start with stdio (default)
+npx mcpdog@latest
+
+# Or explicitly specify stdio
+npx mcpdog@latest --transport stdio
+```
+
+#### Streamable HTTP
+- HTTP-based JSON-RPC communication
+- Compatible with web-based and HTTP-capable clients
+- CORS-enabled for browser access
+- Health check endpoint included
+
+```bash
+# Start HTTP server on default port 3001
+npx mcpdog@latest --transport streamable-http
+
+# Start HTTP server on custom port
+npx mcpdog@latest --transport streamable-http --port 8080
+
+# Or using proxy command
+npx mcpdog@latest proxy --transport streamable-http --port 3001
+```
+
+**HTTP Endpoints:**
+- `GET /` - Health check endpoint
+- `POST /` - MCP JSON-RPC endpoint
+
+### Server Connection Protocols (for connecting to MCP servers)
+
+#### stdio
 - Direct process communication
 - Best for local servers
 - Lowest latency
 
-### HTTP SSE (Server-Sent Events)
+#### HTTP SSE (Server-Sent Events)
 - Real-time streaming
 - Good for remote servers
 - Browser-compatible
 
-### Streamable HTTP
+#### Streamable HTTP
 - HTTP-based streaming
 - Compatible with most HTTP clients
 - Good for cloud services
