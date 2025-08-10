@@ -115,18 +115,27 @@ Add this to your Cursor MCP configuration:
 }
 ```
 
-#### Alternative: HTTP Transport
-For MCP clients that support HTTP transport:
+#### Alternative: Streamable HTTP Transport
+For MCP clients that support streamable HTTP transport:
+
+**Step 1:** Start MCPDog HTTP server manually:
+```bash
+npx mcpdog@latest --transport streamable-http --port 3001
+```
+
+**Step 2:** Configure your MCP client to connect to the HTTP server:
 ```json
 {
   "mcpServers": {
     "mcpdog-http": {
-      "command": "npx",
-      "args": ["mcpdog@latest", "proxy", "--transport", "streamable-http", "--port", "3001"]
+      "type": "streamable-http",
+      "url": "http://localhost:3001"
     }
   }
 }
 ```
+
+> **Note**: Unlike stdio transport, streamable HTTP requires you to manually start the server first, then configure the client to connect to it via URL. The client does not start the server automatically.
 
 > **That's it!** Once configured, MCPDog will automatically start when your client connects and manage all your MCP servers for you.
 

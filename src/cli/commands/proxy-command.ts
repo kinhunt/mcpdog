@@ -282,11 +282,15 @@ ${CLIUtils.colorize('MCP Client Configuration:', 'yellow')}
     }
   }
   
-  For HTTP transport:
+  For streamable HTTP transport:
+  First start server manually: mcpdog --transport streamable-http --port 3001
+  Then configure client:
   {
-    "mcpdog": {
-      "command": "mcpdog", 
-      "args": ["proxy", "--transport", "streamable-http", "--port", "3001"]
+    "mcpServers": {
+      "mcpdog-http": {
+        "type": "streamable-http",
+        "url": "http://localhost:3001"
+      }
     }
   }
 
