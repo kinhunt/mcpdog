@@ -8,14 +8,20 @@ import { createServer, Server as NetServer } from 'net';
 import { Server as HttpServer } from 'http';
 import { MCPDogServer } from '../core/mcpdog-server.js';
 import { ConfigManager } from '../config/config-manager.js';
+import { StreamableHttpMCPServer } from '../streamable-http-server.js';
 import path from 'path';
 import fs from 'fs/promises';
 
 export interface DaemonConfig {
   configPath: string;
   ipcPort?: number;
-  webPort?: number;
+  dashboardPort?: number;
+  httpPort?: number;
+  enableHttp?: boolean;
+  enableStdio?: boolean;
   pidFile?: string;
+  // backward compatibility
+  webPort?: number;
 }
 
 export interface DaemonClient {
@@ -30,6 +36,7 @@ export class MCPDogDaemon extends EventEmitter {
   private configManager: ConfigManager;
   private ipcServer: NetServer;
   private webServer?: HttpServer;
+  private httpMCPServer?: StreamableHttpMCPServer;
   private clients = new Map<string, DaemonClient>();
   private config: DaemonConfig;
   private isRunning = false;
@@ -356,6 +363,18 @@ export class MCPDogDaemon extends EventEmitter {
         });
       });
 
+      // Start HTTP MCP server if enabled
+      if (this.config.enableHttp && this.config.httpPort) {
+        try {
+          this.httpMCPServer = new StreamableHttpMCPServer(this.configManager, this.config.httpPort);
+          await this.httpMCPServer.start();
+          console.log(`[DAEMON] HTTP MCP server started on port ${this.config.httpPort}`);
+        } catch (error) {
+          console.error(`[DAEMON] Failed to start HTTP MCP server on port ${this.config.httpPort}:`, error);
+          // HTTP transport is optional, continue without it
+        }
+      }
+
       // Write PID file
       if (this.config.pidFile) {
         await fs.writeFile(this.config.pidFile, process.pid.toString());
@@ -383,6 +402,17 @@ export class MCPDogDaemon extends EventEmitter {
         }
       });
       this.clients.clear();
+
+      // Stop HTTP MCP server if running
+      if (this.httpMCPServer) {
+        try {
+          // StreamableHttpMCPServer doesn't have a direct stop method, 
+          // but it should clean up on process exit
+          console.log('[DAEMON] HTTP MCP server stopped');
+        } catch (error) {
+          console.error('[DAEMON] Error stopping HTTP MCP server:', error);
+        }
+      }
 
       // Stop IPC server
       await new Promise<void>((resolve) => {

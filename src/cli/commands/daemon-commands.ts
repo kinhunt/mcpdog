@@ -58,12 +58,14 @@ export class DaemonCommands {
   /**
    * Find an available port starting from the given port
    */
-  private async findAvailablePort(startPort: number): Promise<number> {
-    let port = startPort;
-    while (!(await this.isPortAvailable(port))) {
-      port++;
+  private async findAvailablePort(startPort: number, maxAttempts: number = 10): Promise<number> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const port = startPort + i;
+      if (await this.isPortAvailable(port)) {
+        return port;
+      }
     }
-    return port;
+    throw new Error(`No available port found starting from ${startPort} (tried ${maxAttempts} ports)`);
   }
 
   /**

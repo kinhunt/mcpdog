@@ -11,7 +11,7 @@ export class StreamableHttpMCPServer extends EventEmitter {
   private processedRequests: Set<string> = new Set();
   private sentResponses: Set<string> = new Set();
 
-  constructor(configManager: ConfigManager, port: number = 3001) {
+  constructor(configManager: ConfigManager, port: number = 4000) {
     super();
     console.error(`[HTTP] Creating StreamableHttpMCPServer instance on port ${port}`);
     this.port = port;

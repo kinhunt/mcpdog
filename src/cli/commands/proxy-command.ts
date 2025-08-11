@@ -99,7 +99,7 @@ export class ProxyCommand {
   }
 
   private async startHttpMode(options: Record<string, any>): Promise<void> {
-    const httpPort = parseInt(options.port) || 3001;
+    const httpPort = parseInt(options.port) || 4000;
     
     try {
       const httpServer = new StreamableHttpMCPServer(this.configManager, httpPort);
@@ -254,7 +254,7 @@ ${CLIUtils.colorize('Usage:', 'yellow')}
 
 ${CLIUtils.colorize('Options:', 'yellow')}
   --transport <type>    Transport protocol: stdio (default) or streamable-http
-  -p, --port <port>     Port for HTTP transport (default: 3001)
+  -p, --port <port>     Port for HTTP transport (default: 4000)
   --daemon-port <port>  Connect to daemon on specific port (default: 9999, stdio mode only)
   --help               Show this help message
 
@@ -268,7 +268,7 @@ ${CLIUtils.colorize('Transport Types:', 'yellow')}
 
 ${CLIUtils.colorize('Examples:', 'yellow')}
   mcpdog proxy                                    # Start with stdio transport
-  mcpdog proxy --transport streamable-http        # Start HTTP server on port 3001
+  mcpdog proxy --transport streamable-http        # Start HTTP server on port 4000
   mcpdog proxy --transport streamable-http --port 8080  # Start HTTP server on port 8080
   mcpdog proxy --daemon-port 9999                # Use specific daemon port (stdio only)
 
@@ -283,13 +283,13 @@ ${CLIUtils.colorize('MCP Client Configuration:', 'yellow')}
   }
   
   For streamable HTTP transport:
-  First start server manually: mcpdog --transport streamable-http --port 3001
+  First start server manually: mcpdog --transport streamable-http --port 4000
   Then configure client:
   {
     "mcpServers": {
       "mcpdog-http": {
         "type": "streamable-http",
-        "url": "http://localhost:3001"
+        "url": "http://localhost:4000"
       }
     }
   }

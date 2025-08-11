@@ -204,7 +204,7 @@ Usage: mcpdog [options]
 Options:
   -c, --config <path>     Configuration file path (default: ./mcpdog.config.json)
   -t, --transport <type>  Transport protocol: stdio (default) or streamable-http
-  -p, --port <port>       Port for HTTP transport (default: 3001)
+  -p, --port <port>       Port for HTTP transport (default: 4000)
   --web-port <port>       Enable web interface on port (experimental)
   -h, --help              Show this help message
 
@@ -244,7 +244,7 @@ async function main(): Promise<void> {
   const transportType = transport || 'stdio';
   
   if (transportType === 'streamable-http') {
-    const httpPort = port || 3001;
+    const httpPort = port || 4000;
     const httpServer = new StreamableHttpMCPServer(configManager, httpPort);
     await httpServer.start();
   } else if (transportType === 'stdio') {

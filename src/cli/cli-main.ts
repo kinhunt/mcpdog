@@ -20,9 +20,14 @@ async function main() {
         verbose: { type: 'boolean' },
         json: { type: 'boolean' },
         'no-color': { type: 'boolean' },
-        'web-port': { type: 'string' },
+        'dashboard-port': { type: 'string' },
+        'mcp-http-port': { type: 'string' },
+        'web-port': { type: 'string' }, // deprecated, kept for backward compatibility
         'daemon-port': { type: 'string' },
         'pid-file': { type: 'string' },
+        'stdio-only': { type: 'boolean' },
+        'http-only': { type: 'boolean' },
+        'no-dashboard': { type: 'boolean' },
         port: { type: 'string', short: 'p' },
         // Config command options
         endpoint: { type: 'string' },

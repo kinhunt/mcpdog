@@ -69,10 +69,10 @@ MCPDog now supports HTTP-based communication in addition to the traditional stdi
 Quick example:
 ```bash
 # Start MCPDog with HTTP transport
-npx mcpdog@latest --transport streamable-http --port 3001
+npx mcpdog@latest --transport streamable-http --port 4000
 
 # Test with curl
-curl -X POST http://localhost:3001/ \
+curl -X POST http://localhost:4000/ \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
 ```
@@ -83,7 +83,26 @@ curl -X POST http://localhost:3001/ \
 - Node.js >= 18
 - An MCP client (Claude Desktop, Cursor, etc.)
 
-### Step 1: Configure Your MCP Client
+### Step 1: Start MCPDog (New Unified Approach)
+
+**Start all services with a single command:**
+```bash
+npx mcpdog@latest start
+```
+
+This starts:
+- ✅ **Stdio Transport** (for MCP clients like Claude Desktop, Cursor)  
+- ✅ **HTTP Transport** (for remote/web clients) on port 4000
+- ✅ **Dashboard UI** (for management) on port 3000
+
+**Alternative startup modes:**
+```bash
+npx mcpdog@latest start --stdio-only      # Only stdio + dashboard
+npx mcpdog@latest start --http-only       # Only HTTP + dashboard  
+npx mcpdog@latest start --no-dashboard    # All transports, no dashboard
+```
+
+### Step 2: Configure Your MCP Client
 
 **One-time configuration for all your MCP servers!**
 
@@ -120,7 +139,7 @@ For MCP clients that support streamable HTTP transport:
 
 **Step 1:** Start MCPDog HTTP server manually:
 ```bash
-npx mcpdog@latest --transport streamable-http --port 3001
+npx mcpdog@latest --transport streamable-http --port 4000
 ```
 
 **Step 2:** Configure your MCP client to connect to the HTTP server:
@@ -129,7 +148,7 @@ npx mcpdog@latest --transport streamable-http --port 3001
   "mcpServers": {
     "mcpdog-http": {
       "type": "streamable-http",
-      "url": "http://localhost:3001"
+      "url": "http://localhost:4000"
     }
   }
 }
@@ -139,7 +158,7 @@ npx mcpdog@latest --transport streamable-http --port 3001
 
 > **That's it!** Once configured, MCPDog will automatically start when your client connects and manage all your MCP servers for you.
 
-### Step 2: Manage Servers via Web Dashboard
+### Step 3: Manage Servers via Dashboard
 
 Open your browser and go to `http://localhost:3000` to:
 - **Add new MCP servers** with a few clicks
@@ -148,13 +167,11 @@ Open your browser and go to `http://localhost:3000` to:
 - **View server logs** and performance metrics
 - **Generate client configurations** for other tools
 
-> **Note**: The daemon runs in the background and will continue running even after you close your MCP client.
+### Step 4: Stop MCPDog (When Done)
 
-### Step 3: Stop MCPDog (Optional)
-
-When you're done, stop the daemon:
+Stop all services:
 ```bash
-npx mcpdog@latest daemon stop
+npx mcpdog@latest stop
 ```
 
 ---
@@ -337,19 +354,36 @@ npx mcpdog@latest --transport stdio
 - Health check endpoint included
 
 ```bash
-# Start HTTP server on default port 3001
+# Start HTTP server on default port 4000
 npx mcpdog@latest --transport streamable-http
 
 # Start HTTP server on custom port
 npx mcpdog@latest --transport streamable-http --port 8080
 
 # Or using proxy command
-npx mcpdog@latest proxy --transport streamable-http --port 3001
+npx mcpdog@latest proxy --transport streamable-http --port 4000
 ```
 
 **HTTP Endpoints:**
-- `GET /` - Health check endpoint
+- `GET /` - Health check endpoint  
 - `POST /` - MCP JSON-RPC endpoint
+
+### New Unified Commands (v2.0.17+)
+
+The new `start` command provides a unified way to launch all MCPDog services:
+
+```bash
+# Start everything: stdio + HTTP + dashboard
+npx mcpdog@latest start
+
+# Customize ports  
+npx mcpdog@latest start --dashboard-port 3001 --mcp-http-port 4001
+
+# Only specific services
+npx mcpdog@latest start --stdio-only      # stdio + dashboard
+npx mcpdog@latest start --http-only       # HTTP + dashboard
+npx mcpdog@latest start --no-dashboard    # transports only
+```
 
 ### Server Connection Protocols (for connecting to MCP servers)
 

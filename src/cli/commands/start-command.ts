@@ -7,8 +7,21 @@ import { CLIUtils } from '../cli-utils.js';
 import { DaemonCommands } from './daemon-commands.js';
 import { spawn } from 'child_process';
 import { DaemonClient } from '../../daemon/daemon-client.js';
+import { MCPDogDaemon, DaemonConfig } from '../../daemon/mcpdog-daemon.js';
+import { createServer } from 'net';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
+
+interface StartupConfig {
+  enableStdio: boolean;
+  enableHttp: boolean;
+  enableDashboard: boolean;
+  dashboardPort: number;
+  httpPort: number;
+  daemonPort: number;
+  pidFile: string;
+}
 
 export class StartCommand {
   private daemonCommands: DaemonCommands;
@@ -36,62 +49,175 @@ export class StartCommand {
 ${CLIUtils.colorize('Available actions:', 'yellow')}
   mcpdog status    # Check current status
   mcpdog stop      # Stop the daemon
-  mcpdog restart   # Restart the daemon (not implemented yet)
 `);
         process.exit(1);
       }
 
-      // 显示启动信息
-      this.showStartingInfo(options);
+      // 解析启动模式
+      const startupConfig = this.parseStartupOptions(options);
       
-      // 直接调用守护进程启动，但在后台执行友好信息显示
-      this.startDaemonWithFriendlyOutput(options);
+      // 显示启动信息
+      this.showStartingInfo(startupConfig);
+      
+      // 启动守护进程
+      await this.startDaemonWithConfig(startupConfig);
       
     } catch (error) {
       await this.showStartupError(error as Error, options);
     }
   }
 
-  private async showStartupInfo(options: Record<string, any>): Promise<void> {
+  private parseStartupOptions(options: Record<string, any>): StartupConfig {
+    // 支持向后兼容性
+    const dashboardPort = parseInt(options['dashboard-port']) || 
+                         parseInt(options['web-port']) || 3000;
+    const httpPort = parseInt(options['mcp-http-port']) || 4000;
+    const daemonPort = parseInt(options['daemon-port']) || 9999;
+    const pidFile = options['pid-file'] || path.join(os.homedir(), '.mcpdog', 'mcpdog.pid');
+
+    // 确定启动模式
+    let enableStdio = true;  // 默认启用
+    let enableHttp = true;   // 默认启用
+    let enableDashboard = !options['no-dashboard']; // 默认启用，除非明确禁用
+
+    if (options['stdio-only']) {
+      enableStdio = true;
+      enableHttp = false;
+    } else if (options['http-only']) {
+      enableStdio = false;
+      enableHttp = true;
+    }
+
+    return {
+      enableStdio,
+      enableHttp,
+      enableDashboard,
+      dashboardPort,
+      httpPort,
+      daemonPort,
+      pidFile
+    };
+  }
+
+  private async showStartupInfo(startupConfig: StartupConfig): Promise<void> {
     // 等待一点时间让守护进程完全启动
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const config = this.configManager.getConfig();
     const enabledServers = this.configManager.getEnabledServers();
-    const webPort = options['web-port'] || config.web?.port || 3000;
-    const ipcPort = options['daemon-port'] || 9999;
 
     console.log(`
 🚀 ${CLIUtils.colorize('MCPDog started successfully!', 'green')}
 
-${CLIUtils.colorize('Configuration:', 'cyan')}
-  📁 Config file: ${this.configManager.getConfigPath()}
-  🔧 Enabled servers: ${Object.keys(enabledServers).join(', ')} (${this.getTotalToolCount()} tools)
-  🌐 Web interface: ${CLIUtils.colorize(`http://localhost:${webPort}`, 'blue')}
-  🔌 IPC port: ${ipcPort}
+📊 ${CLIUtils.colorize('Services:', 'cyan')}${startupConfig.enableStdio ? `
+  ✅ Stdio Transport: Ready (for MCP clients)` : ''}${startupConfig.enableHttp ? `
+  ✅ HTTP Transport: ${CLIUtils.colorize(`http://localhost:${startupConfig.httpPort}`, 'blue')}` : ''}${startupConfig.enableDashboard ? `
+  ✅ Dashboard UI: ${CLIUtils.colorize(`http://localhost:${startupConfig.dashboardPort}`, 'blue')}` : ''}
 
-${CLIUtils.colorize('MCP Client Configuration:', 'cyan')}
-  Add this to your MCP client (Claude Desktop, Cursor, etc.):
+🔧 ${CLIUtils.colorize('Configuration:', 'cyan')}
+  📁 Config: ${this.configManager.getConfigPath()}
+  🔧 Servers: ${Object.keys(enabledServers).join(', ')} (${this.getTotalToolCount()} tools)
 
-  ${CLIUtils.colorize(JSON.stringify({
-    "mcpdog": {
-      "command": "mcpdog",
-      "args": ["proxy"]
-    }
-  }, null, 2), 'yellow')}
+📋 ${CLIUtils.colorize('Usage:', 'cyan')}${startupConfig.enableStdio ? `
+  • MCP Clients: Use 'npx mcpdog@latest' in client config` : ''}${startupConfig.enableHttp ? `
+  • HTTP Clients: Connect to http://localhost:${startupConfig.httpPort}` : ''}${startupConfig.enableDashboard ? `  
+  • Manage: Visit http://localhost:${startupConfig.dashboardPort}` : ''}
 
-${CLIUtils.colorize('💡 Useful commands:', 'cyan')}
-  mcpdog status          # Check running status
-  mcpdog stop            # Stop the daemon
-  mcpdog config list     # View all servers
-  
-${CLIUtils.colorize('🌐 Web Interface Features:', 'cyan')}
-  • Real-time tool call monitoring
-  • Visual configuration management
-  • Client connection status
+⏹️  ${CLIUtils.colorize('Stop:', 'cyan')} npx mcpdog@latest stop
 
 ${CLIUtils.colorize('[INFO]', 'cyan')} Daemon is running in the background
 `);
+  }
+
+  private async startDaemonWithConfig(startupConfig: StartupConfig): Promise<void> {
+    // 查找可用端口
+    const finalConfig = await this.findAvailablePorts(startupConfig);
+    
+    // 显示端口变化信息
+    if (finalConfig.dashboardPort !== startupConfig.dashboardPort) {
+      CLIUtils.warn(`Dashboard port ${startupConfig.dashboardPort} is busy, using ${finalConfig.dashboardPort}`);
+    }
+    if (finalConfig.httpPort !== startupConfig.httpPort) {
+      CLIUtils.warn(`HTTP port ${startupConfig.httpPort} is busy, using ${finalConfig.httpPort}`);
+    }
+
+    // 确保 .mcpdog 目录存在
+    const mcpdogDir = path.dirname(finalConfig.pidFile);
+    try {
+      await fs.mkdir(mcpdogDir, { recursive: true });
+    } catch (error) {
+      // 目录可能已存在，忽略错误
+    }
+
+    // 创建 daemon 配置
+    const daemonConfig: DaemonConfig = {
+      configPath: this.configManager.getConfigPath(),
+      ipcPort: finalConfig.daemonPort,
+      dashboardPort: finalConfig.enableDashboard ? finalConfig.dashboardPort : undefined,
+      httpPort: finalConfig.enableHttp ? finalConfig.httpPort : undefined,
+      enableHttp: finalConfig.enableHttp,
+      enableStdio: finalConfig.enableStdio,
+      pidFile: finalConfig.pidFile,
+    };
+
+    // 启动 daemon
+    const daemon = new MCPDogDaemon(daemonConfig);
+    
+    try {
+      await daemon.start();
+      
+      // 启动 dashboard (如果启用)
+      if (finalConfig.enableDashboard) {
+        try {
+          await daemon.startWebServer(finalConfig.dashboardPort);
+        } catch (error) {
+          CLIUtils.warn(`Failed to start dashboard on port ${finalConfig.dashboardPort}: ${(error as Error).message}`);
+        }
+      }
+
+      // 显示成功信息
+      await this.showStartupInfo(finalConfig);
+
+    } catch (error) {
+      throw new Error(`Failed to start daemon: ${(error as Error).message}`);
+    }
+  }
+
+  private async findAvailablePorts(config: StartupConfig): Promise<StartupConfig> {
+    const result = { ...config };
+    
+    if (config.enableDashboard) {
+      result.dashboardPort = await this.findAvailablePort(config.dashboardPort);
+    }
+    
+    if (config.enableHttp) {
+      result.httpPort = await this.findAvailablePort(config.httpPort);
+    }
+    
+    return result;
+  }
+
+  private async findAvailablePort(startPort: number, maxAttempts: number = 10): Promise<number> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const port = startPort + i;
+      if (await this.isPortAvailable(port)) {
+        return port;
+      }
+    }
+    throw new Error(`No available port found starting from ${startPort} (tried ${maxAttempts} ports)`);
+  }
+
+  private async isPortAvailable(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const server = createServer();
+      server.listen(port, 'localhost', () => {
+        server.close();
+        resolve(true);
+      });
+      server.on('error', () => {
+        resolve(false);
+      });
+    });
   }
 
   private async showStartupError(error: Error, options: Record<string, any>): Promise<void> {
@@ -142,39 +268,7 @@ ${CLIUtils.colorize('Need help?', 'cyan')}
 `);
   }
 
-  private async startDaemonWithFriendlyOutput(options: Record<string, any>): Promise<void> {
-    // 设置一个短暂的延迟来显示友好信息
-    setTimeout(async () => {
-      await this.showStartupInfo(options);
-    }, 2000);
 
-    // 直接调用守护进程启动（这会阻塞，但友好信息已经异步显示）
-    await this.daemonCommands.start([], options);
-  }
-
-  private async waitForDaemonReady(options: Record<string, any>): Promise<void> {
-    const daemonPort = parseInt(options['daemon-port']) || 9999;
-    const maxAttempts = 10;
-    const delay = 500;
-
-    for (let i = 0; i < maxAttempts; i++) {
-      try {
-        const client = new DaemonClient({
-          port: daemonPort,
-          clientType: 'cli',
-          silent: true
-        });
-
-        await client.connect();
-        await client.disconnect();
-        return; // 连接成功
-      } catch {
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-
-    throw new Error('Daemon failed to start within expected time');
-  }
 
   private getTotalToolCount(): number {
     const enabledServers = this.configManager.getEnabledServers();
@@ -183,33 +277,44 @@ ${CLIUtils.colorize('Need help?', 'cyan')}
 
   private showHelp(): void {
     console.log(`
-${CLIUtils.colorize('mcpdog start', 'cyan')} - Start MCPDog daemon with friendly output
+${CLIUtils.colorize('mcpdog start', 'cyan')} - Start MCPDog daemon with all services
 
 ${CLIUtils.colorize('Usage:', 'yellow')}
   mcpdog start [options]
 
 ${CLIUtils.colorize('Options:', 'yellow')}
-  -c, --config <path>    Configuration file path (default: ./mcpdog.config.json)
-  --web-port <port>      Web interface port (auto-detected from 3000 if not specified)
-  --daemon-port <port>   IPC daemon port (default: 9999)
-  --pid-file <path>      PID file location
-  --help                 Show this help message
+  -c, --config <path>        Configuration file path (default: ./mcpdog.config.json)
+  --dashboard-port <port>    Dashboard UI port (default: 3000, auto-detected)
+  --mcp-http-port <port>     HTTP transport port (default: 4000, auto-detected)
+  --daemon-port <port>       IPC daemon port (default: 9999)
+  --pid-file <path>          PID file location (default: ~/.mcpdog/mcpdog.pid)
+  
+  --stdio-only               Only enable stdio transport + dashboard
+  --http-only                Only enable HTTP transport + dashboard
+  --no-dashboard             Disable dashboard UI
+  
+  --web-port <port>          Deprecated, use --dashboard-port
+  --help                     Show this help message
 
-${CLIUtils.colorize('Description:', 'yellow')}
-  This command starts the MCPDog daemon that manages MCP servers and provides
-  a unified interface for MCP clients. The daemon runs in the background and
-  provides both a web interface for management (enabled by default) and an IPC 
-  interface for clients.
+${CLIUtils.colorize('Default Behavior:', 'yellow')}
+  By default, 'mcpdog start' enables all services:
+  • Stdio Transport (for MCP clients)
+  • HTTP Transport (for remote/web clients)  
+  • Dashboard UI (for management)
 
 ${CLIUtils.colorize('Examples:', 'yellow')}
-  mcpdog start                           # Start with default configuration
-  mcpdog start --config my-config.json   # Start with custom configuration  
-  mcpdog start --web-port 8080           # Start with custom web port
+  mcpdog start                              # Start all services
+  mcpdog start --stdio-only                 # Only stdio + dashboard
+  mcpdog start --http-only                  # Only HTTP + dashboard
+  mcpdog start --no-dashboard               # All transports, no dashboard
+  mcpdog start --dashboard-port 3001        # Custom dashboard port
+  mcpdog start --mcp-http-port 4001         # Custom HTTP port
 
 ${CLIUtils.colorize('After starting:', 'yellow')}
-  • Configure your MCP clients to use: mcpdog proxy
-  • Access web interface at: http://localhost:3000
-  • Check status with: mcpdog status
+  • MCP Clients: Use 'npx mcpdog@latest' in client config
+  • HTTP Clients: Connect to http://localhost:4000
+  • Management: Visit http://localhost:3000
+  • Stop: mcpdog stop
 `);
   }
 }
