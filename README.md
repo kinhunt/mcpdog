@@ -106,6 +106,8 @@ npx mcpdog@latest start --no-dashboard    # All transports, no dashboard
 
 **One-time configuration for all your MCP servers!**
 
+> **Note**: The `--yes` flag automatically confirms package installation when MCPDog runs for the first time, ensuring smooth startup without manual confirmation prompts.
+
 #### For Claude Desktop (stdio transport - recommended)
 Add this to your Claude Desktop configuration:
 ```json
@@ -113,7 +115,7 @@ Add this to your Claude Desktop configuration:
   "mcpServers": {
     "mcpdog": {
       "command": "npx",
-      "args": ["mcpdog@latest"]
+      "args": ["--yes", "mcpdog@latest"]
     }
   }
 }
@@ -127,7 +129,7 @@ Add this to your Cursor MCP configuration:
     "mcpServers": {
       "mcpdog": {
         "command": "npx",
-        "args": ["mcpdog@latest"]
+        "args": ["--yes", "mcpdog@latest"]
       }
     }
   }
