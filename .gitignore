@@ -48,6 +48,9 @@ coverage/
 # User data
 .mcpdog/
 
+# AI Memory (testing records and investigation findings)
+memory/
+
 # Temporary files
 tmp/
 temp/

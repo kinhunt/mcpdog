@@ -17,6 +17,7 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
   }> = new Map();
 
   private buffer: string = '';
+  private stderrBuffer: string = '';
   
   // Process stability monitoring
   private crashCount: number = 0;
@@ -70,11 +71,34 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
         ...this.config.env 
       };
 
-      this.process = spawn(this.config.command, this.config.args || [], {
+      // Special handling for playwright to provide TTY-like environment
+      const spawnOptions: any = {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: this.config.cwd,
         env: processEnv
-      });
+      };
+      
+      // Enhanced stdio handling for high-output processes like playwright
+      if (this.name === 'playwright') {
+        spawnOptions.detached = false; // Keep attached but in separate session
+        spawnOptions.shell = false; // Avoid shell interpretation issues
+        // Increase buffer size for high-volume stderr output
+        spawnOptions.stdio = ['pipe', 'pipe', 'pipe'];
+        console.error(`[${this.name}] Using special spawn options for playwright`);
+        
+        // Verify critical environment variables are set
+        if (processEnv.DEBUG) {
+          console.error(`[${this.name}] ✅ DEBUG environment variable set: ${processEnv.DEBUG}`);
+        } else {
+          console.error(`[${this.name}] ⚠️ DEBUG environment variable not set`);
+        }
+        
+        if (processEnv.PWDEBUG) {
+          console.error(`[${this.name}] ✅ PWDEBUG environment variable set`);
+        }
+      }
+      
+      this.process = spawn(this.config.command, this.config.args || [], spawnOptions);
 
       this.setupProcessHandlers();
       
@@ -148,16 +172,27 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
     });
 
     this.process.stderr?.on('data', (data: Buffer) => {
-      const stderr = data.toString();
-      // Log to log manager
-      globalLogManager.addServerOutput(this.name, stderr, 'stderr');
-      this.emit('log', { stream: 'stderr', data: stderr }); // Ensure all output is sent to frontend
-      
-      // Detect browsermcp stack overflow errors
-      if (stderr.includes('Maximum call stack size exceeded') || 
-          stderr.includes('RangeError')) {
-        console.error(`⚠️ ${this.name} detected stack overflow, will auto-restart on next request`);
-        globalLogManager.addLog(this.name, 'warn', 'Stack overflow detected, will auto-restart on next request', 'system');
+      this.stderrBuffer += data.toString();
+      const lines = this.stderrBuffer.split('\n');
+      this.stderrBuffer = lines.pop() || ''; // Keep incomplete line
+
+      for (const line of lines) {
+        if (line.trim()) {
+          const stderr = line.trim();
+          // Add debug logging for stderr
+          console.error(`[${this.name}] DEBUG: STDERR received - length: ${stderr.length}`);
+          console.error(`[${this.name}] DEBUG: STDERR content: ${stderr.substring(0, 200)}`);
+          // Log to log manager
+          globalLogManager.addServerOutput(this.name, stderr, 'stderr');
+          this.emit('log', { stream: 'stderr', data: stderr }); // Ensure all output is sent to frontend
+          
+          // Detect browsermcp stack overflow errors
+          if (stderr.includes('Maximum call stack size exceeded') || 
+              stderr.includes('RangeError')) {
+            console.error(`⚠️ ${this.name} detected stack overflow, will auto-restart on next request`);
+            globalLogManager.addLog(this.name, 'warn', 'Stack overflow detected, will auto-restart on next request', 'system');
+          }
+        }
       }
     });
 
@@ -168,7 +203,8 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
     });
 
     this.process.on('exit', (code: number | null, signal: string | null) => {
-      console.error(`[${this.name}] Process exited with code ${code}, signal ${signal}.`);
+      console.error(`[${this.name}] DEBUG: Process exited with code ${code}, signal ${signal}.`);
+      console.error(`[${this.name}] DEBUG: Pending requests at exit: ${this.pendingRequests.size}`);
       globalLogManager.addLog(this.name, 'error', `Process exited with code ${code}, signal ${signal}`, 'system');
       
       // Log crash history
@@ -216,15 +252,19 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
   }
 
   private handleStdoutData(data: string): void {
+    console.error(`[${this.name}] DEBUG: Received stdout data - length: ${data.length}`);
     this.buffer += data;
     
     const lines = this.buffer.split('\n');
     this.buffer = lines.pop() || ''; // Keep the last incomplete line
+    console.error(`[${this.name}] DEBUG: Split into ${lines.length} lines, buffer remaining: ${this.buffer.length}`);
 
     for (const line of lines) {
       if (line.trim()) {
+        console.error(`[${this.name}] DEBUG: Processing line length: ${line.length}`);
         try {
           const message = JSON.parse(line);
+          console.error(`[${this.name}] DEBUG: Parsed message - id: ${message.id}, method: ${message.method}`);
           this.handleMessage(message);
         } catch (error) {
           console.error(`Failed to parse message from ${this.name}:`, line);
@@ -320,7 +360,7 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
 
   async callTool(name: string, args: any): Promise<MCPResponse> {
     const startTime = Date.now();
-    globalLogManager.addLog(this.name, 'info', `Calling tool: ${name} with args: ${JSON.stringify(args, null, 2)}`, 'system');
+    globalLogManager.addLog(this.name, 'info', `Calling tool: ${name}`, 'system');
     
     const request: MCPRequest = {
       jsonrpc: '2.0',
@@ -341,7 +381,9 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
       } else {
         globalLogManager.addLog(this.name, 'info', `Tool call successful: ${name} (duration: ${duration}ms)`, 'system');
         if (response.result?.content) {
-          globalLogManager.addLog(this.name, 'debug', `Tool result: ${JSON.stringify(response.result.content, null, 2)}`, 'system');
+          // Log content summary without serializing large content to avoid blocking
+          const contentCount = Array.isArray(response.result.content) ? response.result.content.length : 1;
+          globalLogManager.addLog(this.name, 'debug', `Tool result: ${contentCount} content item(s)`, 'system');
         }
       }
       
@@ -354,8 +396,9 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
   }
 
   async sendRequest(request: MCPRequest): Promise<MCPResponse> {
-    // Log outgoing request
-    globalLogManager.addLog(this.name, 'debug', `Sending request: ${request.method} (ID: ${request.id})`, 'system');
+    // Add detailed debug logging for troubleshooting
+    console.error(`[${this.name}] DEBUG: sendRequest called - method: ${request.method}, id: ${request.id}`);
+    globalLogManager.addLog(this.name, 'info', `DEBUG: Sending request ${request.method} (ID: ${request.id})`, 'system');
     
     // Check process status, try to reconnect if dead
     if (!this.process?.stdin || this.process.killed || this.process.exitCode !== null) {
@@ -388,8 +431,7 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
 
       this.pendingRequests.set(request.id, {
         resolve: (response: MCPResponse) => {
-          const duration = Date.now() - startTime;
-          globalLogManager.addLog(this.name, 'debug', `Request completed: ${request.method} (ID: ${request.id}, duration: ${duration}ms)`, 'system');
+          // Skip debug logging in resolve
           resolve(response);
         },
         reject: (error: Error) => {
@@ -402,7 +444,9 @@ export class StdioAdapter extends EventEmitter implements ServerAdapter {
 
       try {
         const requestStr = JSON.stringify(request) + '\n';
+        console.error(`[${this.name}] DEBUG: Writing to stdin - length: ${requestStr.length}`);
         this.process!.stdin!.write(requestStr);
+        console.error(`[${this.name}] DEBUG: Successfully wrote to stdin`);
       } catch (error) {
         this.pendingRequests.delete(request.id);
         clearTimeout(timeout);

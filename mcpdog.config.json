@@ -10,7 +10,10 @@
         "/tmp"
       ],
       "timeout": 30000,
-      "retries": 3
+      "retries": 3,
+      "toolsConfig": {
+        "mode": "blacklist"
+      }
     },
     "memory-mcp": {
       "name": "memory-mcp",
@@ -22,7 +25,10 @@
         "@modelcontextprotocol/server-memory"
       ],
       "timeout": 30000,
-      "retries": 3
+      "retries": 3,
+      "toolsConfig": {
+        "mode": "blacklist"
+      }
     },
     "browsermcp": {
       "name": "browsermcp",
@@ -65,12 +71,7 @@
       },
       "description": true,
       "toolsConfig": {
-        "mode": "blacklist",
-        "toolSettings": {
-          "browser_close": {
-            "enabled": true
-          }
-        }
+        "mode": "blacklist"
       }
     }
   },

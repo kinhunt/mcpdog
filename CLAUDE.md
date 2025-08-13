@@ -86,6 +86,16 @@ MCPDog is a universal MCP (Model Context Protocol) server manager that acts as a
 4. **Multi-Protocol Support**: Unified interface over different MCP transport protocols
 5. **Real-time Updates**: Web interface uses WebSocket for live server status
 
+## AI Memory Directory
+
+The `memory/` directory contains AI investigation records and testing findings:
+- Technical investigation reports from debugging sessions
+- Code change analysis and impact assessments  
+- Testing methodologies and operational guides
+- Known issues and their root cause analysis
+
+**Note**: This directory is git-ignored to prevent pollution of the main repository with AI debugging artifacts.
+
 ## Development Notes
 
 - Uses ES modules (`"type": "module"`)

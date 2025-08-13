@@ -406,6 +406,15 @@ npx mcpdog@latest start --no-dashboard    # transports only
 
 ## 📊 Troubleshooting
 
+### Known Issues
+
+#### Playwright MCP Compatibility
+⚠️ **Known Issue**: Playwright MCP server (`@playwright/mcp`) does not work reliably with MCPDog's stdio subprocess environment. This is due to Playwright's internal behavior when detecting non-interactive environments, causing it to enter "silent mode" and preventing proper tool execution.
+
+**Workaround**: Use Playwright MCP directly if browser automation is needed, or consider alternative browser automation servers like `@browsermcp/mcp` which are compatible with MCPDog.
+
+**Root Cause**: Playwright detects the subprocess execution environment and disables its core functionality, resulting in tool call timeouts despite successful MCP protocol handshakes.
+
 ### Common Issues
 
 #### Server Not Starting

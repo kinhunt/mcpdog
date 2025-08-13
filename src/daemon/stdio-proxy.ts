@@ -138,7 +138,14 @@ export class StdioProxy {
   }
 
   private sendStdioResponse(response: any) {
-    console.log(JSON.stringify(response));
+    // Write response directly to stdout for MCP protocol
+    const responseStr = JSON.stringify(response) + '\n';
+    process.stdout.write(responseStr);
+    
+    // Log summary to stderr for debugging (avoid stdout pollution)
+    if (responseStr.length > 1000) {
+      process.stderr.write(`[DEBUG] Response sent (${responseStr.length} chars)\n`);
+    }
   }
 
   async start(): Promise<void> {
