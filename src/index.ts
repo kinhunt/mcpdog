@@ -7,8 +7,6 @@ import { StreamableHttpMCPServer } from './streamable-http-server.js';
 export class StdioMCPServer {
   private server: MCPDogServer;
   private readline: any;
-  private processedRequests: Set<string> = new Set(); // Prevent duplicate processing
-  private sentResponses: Set<string> = new Set(); // Prevent duplicate responses
   private lastProcessedLine: string = ''; // Prevent duplicate line processing
 
   constructor(configManager: ConfigManager) {
@@ -89,59 +87,18 @@ export class StdioMCPServer {
       // Handle regular requests
       const request = message as MCPRequest;
       
-      // Generate unique request identifier to prevent duplicate processing (based on method and ID, no timestamp)
-      const requestKey = `${request.method}_${request.id}`;
-      
-      // Check if the same request has already been processed
-      if (this.processedRequests.has(requestKey)) {
-        console.error(`Duplicate request detected, skipping: ${request.method} (id: ${request.id})`);
-        return;
-      }
-      
-      // Record request to prevent duplicates
-      this.processedRequests.add(requestKey);
-      
-      // Clean up old request records (keep latest 500)
-      if (this.processedRequests.size > 500) {
-        const entries = Array.from(this.processedRequests);
-        entries.slice(0, 250).forEach(key => this.processedRequests.delete(key));
-      }
-      
       console.error(`Processing request: ${request.method} (id: ${request.id})`);
       const response = await this.server.handleRequest(request, 'stdio-client');
       console.error(`Sending response for: ${request.method} (id: ${request.id})`);
       this.sendMessage(response);
       
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      if (errorMessage === 'DUPLICATE_REQUEST_IGNORED') {
-        console.error(`[DEDUP] Ignoring duplicate request processing at STDIO level`);
-        // Don't send any response
-        return;
-      }
       console.error('Error processing request:', error);
       // Don't send error response, only log error
     }
   }
 
   private sendMessage(message: MCPResponse | MCPNotification): void {
-    // For response messages, check if already sent
-    if ('id' in message && typeof message.id !== 'undefined') {
-      const responseKey = `response_${message.id}`;
-      
-      if (this.sentResponses.has(responseKey)) {
-        console.error(`Duplicate response detected, skipping: id ${message.id}`);
-        return;
-      }
-      
-      this.sentResponses.add(responseKey);
-      
-      // Clean up old response records
-      if (this.sentResponses.size > 200) {
-        const entries = Array.from(this.sentResponses);
-        entries.slice(0, 100).forEach(key => this.sentResponses.delete(key));
-      }
-    }
     
     const messageStr = JSON.stringify(message);
     console.log(messageStr);

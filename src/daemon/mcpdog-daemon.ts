@@ -366,9 +366,11 @@ export class MCPDogDaemon extends EventEmitter {
       // Start HTTP MCP server if enabled
       if (this.config.enableHttp && this.config.httpPort) {
         try {
-          this.httpMCPServer = new StreamableHttpMCPServer(this.configManager, this.config.httpPort);
+          // Get auth token from environment variable
+          const authToken = process.env.MCPDOG_AUTH_TOKEN;
+          this.httpMCPServer = new StreamableHttpMCPServer(this.configManager, this.config.httpPort, authToken);
           await this.httpMCPServer.start();
-          console.log(`[DAEMON] HTTP MCP server started on port ${this.config.httpPort}`);
+          console.log(`[DAEMON] HTTP MCP server started on port ${this.config.httpPort}${authToken ? ' with authentication' : ''}`);
         } catch (error) {
           console.error(`[DAEMON] Failed to start HTTP MCP server on port ${this.config.httpPort}:`, error);
           // HTTP transport is optional, continue without it

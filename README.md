@@ -79,72 +79,52 @@ curl -X POST http://localhost:4000/ \
 
 ## 🚀 Quick Start
 
+Choose the deployment method that best fits your needs:
+
 ### Prerequisites
 - Node.js >= 18
 - An MCP client (Claude Desktop, Cursor, etc.)
 
-### Step 1: Start MCPDog (New Unified Approach)
+## 📋 Three Deployment Options
 
-**Start all services with a single command:**
-```bash
-npx mcpdog@latest start
-```
+### 1. 🏠 **Local Development** (Simplest - Recommended)
 
-This starts:
-- ✅ **Stdio Transport** (for MCP clients like Claude Desktop, Cursor)  
-- ✅ **HTTP Transport** (for remote/web clients) on port 4000
-- ✅ **Dashboard UI** (for management) on port 3000
+Perfect for local development and personal use. MCPDog runs automatically when your MCP client starts.
 
-**Alternative startup modes:**
-```bash
-npx mcpdog@latest start --stdio-only      # Only stdio + dashboard
-npx mcpdog@latest start --http-only       # Only HTTP + dashboard  
-npx mcpdog@latest start --no-dashboard    # All transports, no dashboard
-```
-
-### Step 2: Configure Your MCP Client
-
-**One-time configuration for all your MCP servers!**
-
-> **Note**: The `--yes` flag automatically confirms package installation when MCPDog runs for the first time, ensuring smooth startup without manual confirmation prompts.
-
-#### For Claude Desktop (stdio transport - recommended)
-Add this to your Claude Desktop configuration:
+**Step 1:** Configure your MCP client (Claude Desktop/Cursor)
 ```json
 {
   "mcpServers": {
     "mcpdog": {
       "command": "npx",
-      "args": ["--yes", "mcpdog@latest"]
+      "args": ["mcpdog@latest"]
     }
   }
 }
 ```
 
-#### For Cursor (stdio transport - recommended)
-Add this to your Cursor MCP configuration:
-```json
-{
-  "mcp": {
-    "mcpServers": {
-      "mcpdog": {
-        "command": "npx",
-        "args": ["--yes", "mcpdog@latest"]
-      }
-    }
-  }
-}
-```
+**Step 2:** Open dashboard to add MCP servers
+- Visit `http://localhost:3000` when MCPDog is running
+- Use the web interface to add and configure your MCP servers
+- Configuration saved to `~/.mcpdog/mcpdog.config.json`
 
-#### Alternative: Streamable HTTP Transport
-For MCP clients that support streamable HTTP transport:
+**That's it!** MCPDog starts automatically with your MCP client and manages all your servers.
 
-**Step 1:** Start MCPDog HTTP server manually:
+---
+
+### 2. 🐳 **Local Docker** (Controlled Environment)
+
+Run MCPDog in a Docker container for isolated, controlled environments without authentication.
+
+**Step 1:** Start MCPDog container
 ```bash
-npx mcpdog@latest --transport streamable-http --port 4000
+docker run -d --name mcpdog \
+  -p 3000:3000 -p 4000:4000 \
+  -v ~/.mcpdog:/usr/src/app/.mcpdog \
+  mcpdog/mcpdog:latest
 ```
 
-**Step 2:** Configure your MCP client to connect to the HTTP server:
+**Step 2:** Configure your MCP client to use HTTP transport
 ```json
 {
   "mcpServers": {
@@ -156,25 +136,65 @@ npx mcpdog@latest --transport streamable-http --port 4000
 }
 ```
 
-> **Note**: Unlike stdio transport, streamable HTTP requires you to manually start the server first, then configure the client to connect to it via URL. The client does not start the server automatically.
+**Step 3:** Manage via web dashboard
+- Visit `http://localhost:3000` to configure servers
+- No authentication required for local Docker setup
 
-> **That's it!** Once configured, MCPDog will automatically start when your client connects and manage all your MCP servers for you.
+---
 
-### Step 3: Manage Servers via Dashboard
+### 3. ☁️ **Cloud Deployment** (Multi-Environment)
 
-Open your browser and go to `http://localhost:3000` to:
-- **Add new MCP servers** with a few clicks
-- **Monitor server status** in real-time
+Deploy MCPDog to the cloud for access across different development environments with authentication.
+
+**Step 1:** Deploy container to cloud with authentication
+```bash
+docker run -d --name mcpdog-cloud \
+  -p 3000:3000 -p 4000:4000 \
+  -e MCPDOG_AUTH_TOKEN=your_secure_token_here \
+  -v /path/to/config:/usr/src/app/.mcpdog \
+  mcpdog/mcpdog:latest
+```
+
+**Step 2:** Configure your MCP client with authentication
+```json
+{
+  "mcpServers": {
+    "mcpdog-http": {
+      "type": "streamable-http",
+      "url": "https://your-cloud-domain.com:4000",
+      "headers": {
+        "Authorization": "Bearer your_secure_token_here"
+      }
+    }
+  }
+}
+```
+
+**Step 3:** Access authenticated web dashboard
+- Visit `https://your-cloud-domain.com:3000` 
+- Login with your authentication token
+- Manage servers across all your development environments
+
+---
+
+## 🌐 Web Dashboard Features
+
+Once MCPDog is running (any deployment method), use the web dashboard to:
+
+- **Add new MCP servers** with auto-detection
+- **Monitor server status** in real-time  
 - **Enable/disable tools** as needed
 - **View server logs** and performance metrics
-- **Generate client configurations** for other tools
+- **Generate client configurations** for easy copy-paste setup
+- **Export configurations** for team sharing
 
-### Step 4: Stop MCPDog (When Done)
+## 🎯 Choose Your Method
 
-Stop all services:
-```bash
-npx mcpdog@latest stop
-```
+| Method | Best For | Setup Complexity | Security |
+|--------|----------|------------------|-----------|
+| **Local Development** | Personal use, quick start | ⭐ Simple | Local only |
+| **Local Docker** | Isolated environments, testing | ⭐⭐ Medium | Containerized |
+| **Cloud Deployment** | Team use, multi-environment | ⭐⭐⭐ Advanced | Authenticated |
 
 ---
 

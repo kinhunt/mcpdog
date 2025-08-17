@@ -58,18 +58,18 @@ export const ServerLogs: React.FC<{ serverName: string }> = ({ serverName }) => 
 
   const getLogStyle = (logData: string, stream: string) => {
     if (logData?.includes('[ERROR]') || stream === 'stderr') {
-      return 'text-red-400';
+      return 'text-error';
     }
     if (logData?.includes('[WARN]')) {
-      return 'text-yellow-400';
+      return 'text-warning';
     }
     if (logData?.includes('[DEBUG]')) {
-      return 'text-gray-500';
+      return 'text-base-content/60';
     }
     if (logData?.includes('[INFO]')) {
-      return 'text-green-400';
+      return 'text-success';
     }
-    return 'text-white';
+    return 'text-base-content';
   };
 
   const getSourceIcon = (stream: string) => {
@@ -82,14 +82,14 @@ export const ServerLogs: React.FC<{ serverName: string }> = ({ serverName }) => 
   };
 
   return (
-    <div className="bg-gray-800 text-white rounded-lg">
+    <div className="card bg-base-200">
       {/* Controls */}
-      <div className="p-3 border-b border-gray-700 flex items-center justify-between">
+      <div className="p-3 border-b border-base-300 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <select 
             value={logLevel}
             onChange={(e) => setLogLevel(e.target.value)}
-            className="bg-gray-700 text-white px-3 py-1 rounded text-sm"
+            className="select select-sm bg-base-100 text-base-content"
           >
             <option value="all">All Levels</option>
             <option value="info">Info</option>
@@ -97,37 +97,37 @@ export const ServerLogs: React.FC<{ serverName: string }> = ({ serverName }) => 
             <option value="error">Error</option>
             <option value="debug">Debug</option>
           </select>
-          <label className="flex items-center space-x-2 text-sm">
+          <label className="label cursor-pointer space-x-2">
             <input
               type="checkbox"
               checked={showDebug}
               onChange={(e) => setShowDebug(e.target.checked)}
-              className="rounded"
+              className="checkbox checkbox-sm"
             />
-            <span>Show Debug</span>
+            <span className="label-text">Show Debug</span>
           </label>
         </div>
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-base-content/60">
           {filteredLogs.length} / {logs.length} logs
         </div>
       </div>
 
       {/* Log Content */}
-      <div className="font-mono text-sm p-4 h-96 overflow-y-auto">
+      <div className="font-mono text-sm p-4 h-96 overflow-y-auto bg-base-100">
         {isLoadingHistory ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-base-content/60">
             <p className="mb-2">📥 Loading historical logs...</p>
-            <div className="animate-pulse">Loading server logs for {serverName}...</div>
+            <div className="loading loading-dots loading-md">Loading server logs for {serverName}...</div>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-base-content/60">
             <p>No log records</p>
             <p className="text-xs mt-2">Runtime logs will be displayed after MCP server connects</p>
           </div>
         ) : (
           filteredLogs.map((log, index) => (
             <div key={index} className={`flex items-start mb-1 ${getLogStyle(log.data, log.stream)}`}>
-              <span className="flex-shrink-0 mr-2 text-xs text-gray-500">
+              <span className="flex-shrink-0 mr-2 text-xs text-base-content/50">
                 {new Date(log.timestamp).toLocaleTimeString()}
               </span>
               <span className="flex-shrink-0 mr-2 text-xs">

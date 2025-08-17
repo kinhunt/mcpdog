@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ServerWithTools, AppConfig, MCPClientConfig } from '../types/config';
+import { apiClient } from '../utils/api';
 
 interface ConfigState {
   // Configuration data
@@ -11,6 +12,10 @@ interface ConfigState {
   loading: boolean;
   saving: boolean;
   error: string | null;
+  
+  // Auth State
+  authRequired: boolean;
+  authToken: string | null;
   
   // Modal states
   showAddServerModal: boolean;
@@ -41,6 +46,9 @@ interface ConfigState {
   
   // Client config generation
   generateClientConfig: (clientType: string, servers?: string[]) => MCPClientConfig;
+  
+  // Auth actions
+  setAuthState: (required: boolean, token?: string | null) => void;
 }
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
@@ -51,6 +59,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   loading: false,
   saving: false,
   error: null,
+  authRequired: false,
+  authToken: null,
   showAddServerModal: false,
   showClientConfigModal: false,
 
@@ -59,17 +69,11 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     console.log('[ConfigStore] Loading config...');
     set({ loading: true, error: null });
     try {
-      const response = await fetch('/api/config');
-      if (!response.ok) throw new Error('Failed to load config');
-      
-      const config = await response.json();
+      const config = await apiClient.get('/api/config');
       console.log('[ConfigStore] Fetched config:', config);
       
       // Load servers with tools
-      const serversResponse = await fetch('/api/servers');
-      if (!serversResponse.ok) throw new Error('Failed to load servers');
-      
-      const servers = await serversResponse.json();
+      const servers = await apiClient.get('/api/servers');
       console.log('[ConfigStore] Fetched servers:', servers);
       
       set({ config, servers, loading: false });
@@ -87,13 +91,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     console.log('[ConfigStore] Saving config...', config);
     set({ saving: true, error: null });
     try {
-      const response = await fetch('/api/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-      
-      if (!response.ok) throw new Error('Failed to save config');
+      await apiClient.put('/api/config', config);
       
       set({ saving: false });
       console.log('[ConfigStore] Config saved successfully.');
@@ -147,11 +145,21 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       }
 
       console.log('[ConfigStore] Sending toggle API request for', serverName);
-      const response = await fetch(`/api/servers/${serverName}/toggle`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) {
+      try {
+        const data = await apiClient.post(`/api/servers/${serverName}/toggle`);
+        console.log('[ConfigStore] Server toggle API response:', data);
+        
+        // If server was enabled and refresh callback provided, delay call to refresh tool list
+        if (targetServer && !targetServer.enabled && refreshToolsCallback) {
+          console.log('[ConfigStore] Server was enabled, scheduling tool refresh');
+          setTimeout(() => {
+            refreshToolsCallback();
+          }, 1500); // Wait for server to fully start and connect
+        }
+        
+        // No need to immediately reload config, let WebSocket updates handle real-time status
+        // WebSocket will automatically update toolCount and connected status when servers connect/disconnect
+      } catch (error) {
         console.error('[ConfigStore] Toggle API request failed for', serverName);
         // If API call fails, restore original state
         if (targetServer) {
@@ -163,22 +171,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
             )
           }));
         }
-        throw new Error('Failed to toggle server');
+        throw error;
       }
-      
-      const data = await response.json();
-      console.log('[ConfigStore] Server toggle API response:', data);
-      
-      // If server was enabled and refresh callback provided, delay call to refresh tool list
-      if (targetServer && !targetServer.enabled && refreshToolsCallback) {
-        console.log('[ConfigStore] Server was enabled, scheduling tool refresh');
-        setTimeout(() => {
-          refreshToolsCallback();
-        }, 1500); // Wait for server to fully start and connect
-      }
-      
-      // No need to immediately reload config, let WebSocket updates handle real-time status
-      // WebSocket will automatically update toolCount and connected status when servers connect/disconnect
     } catch (error) {
       console.error('[ConfigStore] Error toggling server:', error);
       set({ error: (error as Error).message });
@@ -189,13 +183,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   toggleServerTool: async (serverName: string, toolName: string) => {
     console.log('[ConfigStore] Toggling tool:', toolName, 'for server:', serverName);
     try {
-      const response = await fetch(`/api/servers/${serverName}/tools/${toolName}/toggle`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) throw new Error('Failed to toggle tool');
-      
-      const data = await response.json();
+      const data = await apiClient.post(`/api/servers/${serverName}/tools/${toolName}/toggle`);
       console.log('[ConfigStore] Tool toggle API response:', data);
       
       // Update local state immediately after successful toggle
@@ -232,18 +220,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     console.log('[ConfigStore] Adding server:', serverName, config);
     set({ saving: true, error: null });
     try {
-      const response = await fetch('/api/servers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: serverName, config })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add server');
-      }
-      
-      const data = await response.json();
+      const data = await apiClient.post('/api/servers', { name: serverName, config });
       console.log('[ConfigStore] Add server API response:', data);
       
       // Update local state directly instead of reloading all config
@@ -272,16 +249,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     console.log('[ConfigStore] Removing server:', serverName);
     set({ saving: true, error: null });
     try {
-      const response = await fetch(`/api/servers/${serverName}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove server');
-      }
-      
-      const data = await response.json();
+      const data = await apiClient.delete(`/api/servers/${serverName}`);
       console.log('[ConfigStore] Remove server API response:', data);
       
       // Update local state directly instead of reloading all config
@@ -302,15 +270,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   updateServerTools: async (serverName: string, toolsConfig: any) => {
     console.log('[ConfigStore] Updating server tools for', serverName, toolsConfig);
     try {
-      const response = await fetch(`/api/servers/${serverName}/tools`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolsConfig })
-      });
-      
-      if (!response.ok) throw new Error('Failed to update server tools');
-      
-      const data = await response.json();
+      const data = await apiClient.put(`/api/servers/${serverName}/tools`, { toolsConfig });
       console.log('[ConfigStore] Update server tools API response:', data);
       get().updateServerConfig(serverName, { toolsConfig });
       console.log('[ConfigStore] Server tools updated locally.');
@@ -436,5 +396,14 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       default:
         throw new Error(`Unsupported client type: ${clientType}`);
     }
+  },
+
+  // Auth actions
+  setAuthState: (required: boolean, token?: string | null) => {
+    console.log('[ConfigStore] Setting auth state:', { required, hasToken: !!token });
+    set({ 
+      authRequired: required, 
+      authToken: token || localStorage.getItem('mcpdog_token') 
+    });
   }
 }));

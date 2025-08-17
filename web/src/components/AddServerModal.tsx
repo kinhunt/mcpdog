@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, FileText, Settings, Plus, Trash2 } from 'lucide-react';
 import { useConfigStore } from '../store/configStore';
 import { ServerConfig } from '../types/config';
+import { apiClient } from '../utils/api';
 
 // Server name validation pattern
 const SERVER_NAME_PATTERN = /^[a-zA-Z0-9\-_]+$/;
@@ -218,8 +219,8 @@ export const AddServerModal: React.FC = () => {
       // Check existing server names
       let existingNames: string[] = [];
       try {
-        const response = await fetch('/api/servers');
-        existingNames = Object.keys(await response.json());
+        const servers = await apiClient.get('/api/servers');
+        existingNames = Object.keys(servers);
       } catch (error) {
         console.warn('Unable to check server name duplicates:', error);
       }
@@ -290,8 +291,8 @@ export const AddServerModal: React.FC = () => {
       }
 
       try {
-        const response = await fetch('/api/servers');
-        const existingNames = Object.keys(await response.json());
+        const servers = await apiClient.get('/api/servers');
+        const existingNames = Object.keys(servers);
         
         if (existingNames.includes(serverName.trim())) {
           alert(`❌ Server name "${serverName.trim()}" already exists!\n\nPlease choose a different name.`);
@@ -326,32 +327,30 @@ export const AddServerModal: React.FC = () => {
   const isStdio = serverConfig.transport === 'stdio';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="modal modal-open">
+      <div className="modal-box w-full max-w-4xl h-[90vh] max-h-none bg-base-100">
         {/* Modal header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between pb-6 border-b border-base-300">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Add MCP Server</h2>
-            <p className="text-sm text-gray-500 mt-1">Configure a new MCP server</p>
+            <h2 className="text-xl font-bold text-base-content">Add MCP Server</h2>
+            <p className="text-sm text-base-content/70 mt-1">Configure a new MCP server</p>
           </div>
           <button
             onClick={hideAddServer}
-            className="text-gray-400 hover:text-gray-600"
+            className="btn btn-ghost btn-sm btn-circle"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-6 max-h-[600px] overflow-y-auto">
+        <div className="py-6 max-h-[600px] overflow-y-auto">
           {/* Mode switching */}
-          <div className="flex border border-gray-200 rounded-lg p-1 mb-6">
+          <div className="tabs tabs-boxed mb-6">
             <button
               type="button"
               onClick={() => setAddMode('json')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors ${
-                addMode === 'json'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+              className={`tab flex items-center gap-2 ${
+                addMode === 'json' ? 'tab-active' : ''
               }`}
             >
               <FileText className="h-4 w-4" />
@@ -360,10 +359,8 @@ export const AddServerModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setAddMode('form')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors ${
-                addMode === 'form'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+              className={`tab flex items-center gap-2 ${
+                addMode === 'form' ? 'tab-active' : ''
               }`}
             >
               <Settings className="h-4 w-4" />
@@ -375,14 +372,14 @@ export const AddServerModal: React.FC = () => {
             // JSON Configuration Mode
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Server Configuration (JSON)
+                <label className="label">
+                  <span className="label-text font-medium">Server Configuration (JSON)</span>
                 </label>
                 <textarea
                   value={jsonConfig}
                   onChange={(e) => setJsonConfig(e.target.value)}
                   rows={12}
-                  className="w-full p-3 border border-gray-300 rounded-md font-mono text-sm"
+                  className="textarea textarea-bordered w-full font-mono text-sm"
                   placeholder={`{
   "mcpServers": {
     "playwright": {
@@ -393,8 +390,10 @@ export const AddServerModal: React.FC = () => {
 }`}
                 />
                 {jsonError && (
-                  <div className="mt-2 text-red-600 text-sm bg-red-50 p-3 rounded">
-                    {jsonError}
+                  <div className="alert alert-error mt-2">
+                    <div className="text-sm whitespace-pre-wrap">
+                      {jsonError}
+                    </div>
                   </div>
                 )}
               </div>
@@ -403,221 +402,225 @@ export const AddServerModal: React.FC = () => {
             // Form Configuration Mode
             <div className="space-y-6">
               {/* Basic Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-4">Basic Information</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Server Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={serverName}
-                      onChange={(e) => handleServerNameChange(e.target.value)}
-                      className={`w-full p-3 border rounded-md ${
-                        nameValidation.valid 
-                          ? 'border-gray-300 focus:border-blue-500' 
-                          : 'border-red-300 focus:border-red-500'
-                      }`}
-                      placeholder="e.g.: playwright, filesystem-server"
-                    />
-                    {!nameValidation.valid && (
-                      <div className="mt-2 text-red-600 text-sm">
-                        {nameValidation.error}
-                        {nameValidation.suggestions && nameValidation.suggestions.length > 0 && (
-                          <div className="mt-1">
-                            <span className="text-gray-600">Suggestions: </span>
-                            {nameValidation.suggestions.map((suggestion, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => handleServerNameChange(suggestion)}
-                                className="text-blue-600 hover:text-blue-800 underline mr-2"
-                              >
-                                {suggestion}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+              <div className="card bg-base-200">
+                <div className="card-body">
+                  <h4 className="card-title text-base">Basic Information</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="label">
+                        <span className="label-text font-medium">Server Name *</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={serverName}
+                        onChange={(e) => handleServerNameChange(e.target.value)}
+                        className={`input input-bordered w-full ${
+                          !nameValidation.valid ? 'input-error' : ''
+                        }`}
+                        placeholder="e.g.: playwright, filesystem-server"
+                      />
+                      {!nameValidation.valid && (
+                        <div className="mt-2 text-error text-sm">
+                          {nameValidation.error}
+                          {nameValidation.suggestions && nameValidation.suggestions.length > 0 && (
+                            <div className="mt-1">
+                              <span className="text-base-content/70">Suggestions: </span>
+                              {nameValidation.suggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleServerNameChange(suggestion)}
+                                  className="btn btn-link btn-xs p-0 mr-2"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="label">
+                        <span className="label-text-alt">Only letters, numbers, hyphens, and underscores allowed</span>
                       </div>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Only letters, numbers, hyphens, and underscores allowed
-                    </p>
-                  </div>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Transport Protocol
-                    </label>
-                    <select
-                      value={serverConfig.transport}
-                      onChange={(e) => handleConfigChange('transport', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-md"
-                    >
-                      <option value="stdio">Stdio</option>
-                      <option value="http-sse">HTTP SSE</option>
-                      <option value="streamable-http">Streamable HTTP</option>
-                    </select>
-                  </div>
+                    <div>
+                      <label className="label">
+                        <span className="label-text font-medium">Transport Protocol</span>
+                      </label>
+                      <select
+                        value={serverConfig.transport}
+                        onChange={(e) => handleConfigChange('transport', e.target.value)}
+                        className="select select-bordered w-full"
+                      >
+                        <option value="stdio">Stdio</option>
+                        <option value="http-sse">HTTP SSE</option>
+                        <option value="streamable-http">Streamable HTTP</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      value={serverConfig.description || ''}
-                      onChange={(e) => handleConfigChange('description', e.target.value)}
-                      rows={2}
-                      className="w-full p-3 border border-gray-300 rounded-md"
-                      placeholder="Optional server description..."
-                    />
+                    <div>
+                      <label className="label">
+                        <span className="label-text font-medium">Description</span>
+                      </label>
+                      <textarea
+                        value={serverConfig.description || ''}
+                        onChange={(e) => handleConfigChange('description', e.target.value)}
+                        rows={2}
+                        className="textarea textarea-bordered w-full"
+                        placeholder="Optional server description..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Connection Configuration */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-4">Connection Configuration</h4>
-                
-                {isStdio ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Command *
-                      </label>
-                      <input
-                        type="text"
-                        value={serverConfig.command || ''}
-                        onChange={(e) => handleConfigChange('command', e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-md"
-                        placeholder="e.g.: npx, node, python"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Arguments (one per line)
-                      </label>
-                      <textarea
-                        value={serverConfig.args?.join('\n') || ''}
-                        onChange={(e) => handleConfigChange('args', e.target.value.split('\n').filter(Boolean))}
-                        rows={3}
-                        className="w-full p-3 border border-gray-300 rounded-md"
-                        placeholder="e.g.:\n@modelcontextprotocol/server-filesystem\n/path/to/directory"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Environment Variables
-                      </label>
-                      <div className="space-y-2">
-                        {Object.entries(serverConfig.env || {}).map(([key, value], index) => (
-                          <div key={index} className="flex space-x-2">
-                            <input
-                              type="text"
-                              value={key}
-                              onChange={(e) => handleEnvChange(index, 'key', e.target.value)}
-                              className="flex-1 p-2 border border-gray-300 rounded text-sm"
-                              placeholder="Variable name"
-                            />
-                            <input
-                              type="text"
-                              value={value}
-                              onChange={(e) => handleEnvChange(index, 'value', e.target.value)}
-                              className="flex-1 p-2 border border-gray-300 rounded text-sm"
-                              placeholder="Value"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeEnvVar(index)}
-                              className="p-2 text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={addEnvVar}
-                          className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Add Environment Variable</span>
-                        </button>
+              <div className="card bg-base-200">
+                <div className="card-body">
+                  <h4 className="card-title text-base">Connection Configuration</h4>
+                  
+                  {isStdio ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="label">
+                          <span className="label-text font-medium">Command *</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={serverConfig.command || ''}
+                          onChange={(e) => handleConfigChange('command', e.target.value)}
+                          className="input input-bordered w-full"
+                          placeholder="e.g.: npx, node, python"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="label">
+                          <span className="label-text font-medium">Arguments (one per line)</span>
+                        </label>
+                        <textarea
+                          value={serverConfig.args?.join('\n') || ''}
+                          onChange={(e) => handleConfigChange('args', e.target.value.split('\n').filter(Boolean))}
+                          rows={3}
+                          className="textarea textarea-bordered w-full"
+                          placeholder="e.g.:\n@modelcontextprotocol/server-filesystem\n/path/to/directory"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="label">
+                          <span className="label-text font-medium">Environment Variables</span>
+                        </label>
+                        <div className="space-y-2">
+                          {Object.entries(serverConfig.env || {}).map(([key, value], index) => (
+                            <div key={index} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={key}
+                                onChange={(e) => handleEnvChange(index, 'key', e.target.value)}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Variable name"
+                              />
+                              <input
+                                type="text"
+                                value={value}
+                                onChange={(e) => handleEnvChange(index, 'value', e.target.value)}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Value"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeEnvVar(index)}
+                                className="btn btn-ghost btn-sm btn-square text-error"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={addEnvVar}
+                            className="btn btn-ghost btn-sm gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Add Environment Variable</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Endpoint URL *
-                    </label>
-                    <input
-                      type="url"
-                      value={serverConfig.endpoint || ''}
-                      onChange={(e) => handleConfigChange('endpoint', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-md"
-                      placeholder="e.g.: https://api.example.com/mcp"
-                    />
-                  </div>
-                )}
+                  ) : (
+                    <div>
+                      <label className="label">
+                        <span className="label-text font-medium">Endpoint URL *</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={serverConfig.endpoint || ''}
+                        onChange={(e) => handleConfigChange('endpoint', e.target.value)}
+                        className="input input-bordered w-full"
+                        placeholder="e.g.: https://api.example.com/mcp"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Advanced Options */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900">Advanced Options</h4>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    {showAdvanced ? 'Hide' : 'Show'} Advanced
-                  </button>
-                </div>
-                
-                {showAdvanced && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Timeout (ms)
-                        </label>
-                        <input
-                          type="number"
-                          value={serverConfig.timeout || ''}
-                          onChange={(e) => handleConfigChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)}
-                          className="w-full p-3 border border-gray-300 rounded-md"
-                          placeholder="30000"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Retries
-                        </label>
-                        <input
-                          type="number"
-                          value={serverConfig.retries || ''}
-                          onChange={(e) => handleConfigChange('retries', e.target.value ? parseInt(e.target.value) : undefined)}
-                          className="w-full p-3 border border-gray-300 rounded-md"
-                          placeholder="3"
-                        />
+              <div className="card bg-base-200">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="card-title text-base">Advanced Options</h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      {showAdvanced ? 'Hide' : 'Show'} Advanced
+                    </button>
+                  </div>
+                  
+                  {showAdvanced && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="label">
+                            <span className="label-text font-medium">Timeout (ms)</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={serverConfig.timeout || ''}
+                            onChange={(e) => handleConfigChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)}
+                            className="input input-bordered w-full"
+                            placeholder="30000"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">
+                            <span className="label-text font-medium">Retries</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={serverConfig.retries || ''}
+                            onChange={(e) => handleConfigChange('retries', e.target.value ? parseInt(e.target.value) : undefined)}
+                            className="input input-bordered w-full"
+                            placeholder="3"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="modal-action pt-6 border-t border-base-300">
             <button
               type="button"
               onClick={hideAddServer}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              className="btn btn-ghost"
             >
               Cancel
             </button>
@@ -625,7 +628,7 @@ export const AddServerModal: React.FC = () => {
               type="submit"
               onClick={handleSubmit}
               disabled={saving || (addMode === 'form' && !nameValidation.valid)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary"
             >
               {saving ? 'Adding...' : 'Add Server'}
             </button>

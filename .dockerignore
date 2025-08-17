@@ -1,0 +1,35 @@
+# Ignore node_modules, logs, and local development files
+node_modules
+npm-debug.log
+.npm
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore local configs and secrets
+.env
+*.local
+
+# Ignore git and other version control files
+.git
+.gitignore
+
+# Ignore test and temporary files
+coverage
+.nyc_output
+
+# Ignore IDE and editor files
+.vscode
+.idea
+*.swp
+
+# The Docker build will handle node_modules itself
+/node_modules
+/web/node_modules
+
+# Source code is needed for the build stage, so do not ignore it here.
+
+# Ignore build artifacts from local development
+dist/
+web/dist/

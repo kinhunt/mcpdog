@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useConfigStore } from '../store/configStore';
 import { ServerWithTools, ToolWithConfig } from '../types/config';
+import { apiClient } from '../utils/api';
 
 interface ToolsPanelProps {
   server: ServerWithTools;
@@ -46,15 +47,9 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/servers/${server?.name}/tools`);
-      if (response.ok) {
-        const data = await response.json();
-        setTools(data.tools);
-        setToolsConfig(data.toolsConfig);
-      } else {
-        console.warn(`Server ${server?.name} not found, clearing tools`);
-        setTools([]);
-      }
+      const data = await apiClient.get(`/api/servers/${server?.name}/tools`);
+      setTools(data.tools);
+      setToolsConfig(data.toolsConfig);
     } catch (error) {
       console.error('Failed to load server tools:', error);
       setTools([]);
@@ -155,8 +150,8 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
     return (
       <div className="p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading tool list...</p>
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="text-base-content/70">Loading tool list...</p>
         </div>
       </div>
     );
@@ -167,8 +162,8 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
       {/* Tool control header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Tool List</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-medium text-base-content">Tool List</h3>
+          <p className="text-sm text-base-content/70 mt-1">
             View and manage tools provided by {server?.name} server, you can disable unwanted tools
           </p>
         </div>
@@ -176,7 +171,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={loadServerTools}
-            className="btn-secondary btn-sm flex items-center space-x-2"
+            className="btn btn-outline btn-sm flex items-center space-x-2"
           >
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
@@ -185,20 +180,20 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
       </div>
 
       {/* Tool statistics and control mode */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+      <div className="bg-base-200 p-4 rounded-lg mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{tools.length}</div>
-              <div className="text-sm text-gray-500">Total Tools</div>
+              <div className="text-2xl font-bold text-primary">{tools.length}</div>
+              <div className="text-sm text-base-content/70">Total Tools</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{enabledCount}</div>
-              <div className="text-sm text-gray-500">Enabled</div>
+              <div className="text-2xl font-bold text-success">{enabledCount}</div>
+              <div className="text-sm text-base-content/70">Enabled</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{tools.length - enabledCount}</div>
-              <div className="text-sm text-gray-500">Disabled</div>
+              <div className="text-2xl font-bold text-error">{tools.length - enabledCount}</div>
+              <div className="text-sm text-base-content/70">Disabled</div>
             </div>
           </div>
         </div>
@@ -214,12 +209,12 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
               placeholder="Search tools..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-4 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="input input-bordered w-full max-w-xs"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-2.5 text-base-content/40 hover:text-base-content/60"
               >
                 ×
               </button>
@@ -231,13 +226,13 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleBulkToggle(true)}
-            className="btn-secondary btn-sm"
+            className="btn btn-outline btn-sm"
           >
             Enable All
           </button>
           <button
             onClick={() => handleBulkToggle(false)}
-            className="btn-secondary btn-sm"
+            className="btn btn-outline btn-sm"
           >
             Disable All
           </button>
@@ -247,8 +242,8 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
       {/* Tool list */}
       <div className="space-y-3">
         {filteredTools.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Zap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-8 text-base-content/70">
+            <Zap className="h-12 w-12 mx-auto mb-4 text-base-content/30" />
             <p className="mb-2">
               {searchTerm ? 'No matching tools found' : 
                showAllTools ? 'This server does not provide any tools' : 'No enabled tools'}
@@ -256,7 +251,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="text-blue-600 hover:text-blue-800 text-sm"
+                className="text-primary hover:text-primary-focus text-sm"
               >
                 Clear search
               </button>
@@ -266,29 +261,29 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
           filteredTools.map((tool) => (
             <div
               key={tool.name}
-              className={`border rounded-lg p-4 transition-all ${
-                tool.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+              className={`card border transition-all p-4 ${
+                tool.enabled ? 'border-success/30 bg-success/10' : 'border-base-300 bg-base-100'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h4 className="font-medium text-gray-900">{tool.name}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      tool.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                    <h4 className="font-medium text-base-content">{tool.name}</h4>
+                    <span className={`badge badge-sm ${
+                      tool.enabled ? 'badge-success' : 'badge-ghost'
                     }`}>
                       {tool.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
                   
-                  <p className="text-sm text-gray-600 mb-3">{tool.description}</p>
+                  <p className="text-sm text-base-content/80 mb-3">{tool.description}</p>
                   
                   {tool.inputSchema && (
                     <details className="text-xs">
-                      <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
+                      <summary className="cursor-pointer text-base-content/70 hover:text-base-content">
                         View parameter schema
                       </summary>
-                      <pre className="bg-white p-2 rounded border mt-2 overflow-x-auto">
+                      <pre className="bg-base-100 p-2 rounded border border-base-300 mt-2 overflow-x-auto text-base-content">
                         {JSON.stringify(tool.inputSchema, null, 2)}
                       </pre>
                     </details>
@@ -298,10 +293,10 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => handleToggleTool(tool.name)}
-                    className={`p-2 rounded-md transition-colors ${
+                    className={`btn btn-ghost btn-sm ${
                       tool.enabled 
-                        ? 'text-green-600 hover:bg-green-100' 
-                        : 'text-gray-400 hover:bg-gray-100'
+                        ? 'text-success hover:bg-success/20' 
+                        : 'text-base-content/40 hover:bg-base-200'
                     }`}
                     title={tool.enabled ? 'Disable tool' : 'Enable tool'}
                   >
@@ -320,12 +315,12 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ server }) => {
 
       {/* Bottom instructions */}
       {tools.length > 0 && (
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-8 alert alert-info">
           <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-            <div className="text-sm text-blue-800">
+            <AlertCircle className="h-5 w-5" />
+            <div className="text-sm">
               <p className="font-medium mb-1">About Tool Control</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-700">
+              <ul className="list-disc list-inside space-y-1">
                 <li>Enabled tools will be visible and available in MCP clients</li>
                 <li>Disabled tools will be hidden from MCP clients</li>
                 <li>After changing tool status, MCP clients may need to reconnect to see changes</li>

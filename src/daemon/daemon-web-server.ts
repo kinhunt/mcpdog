@@ -13,6 +13,7 @@ import { MCPDogDaemon } from './mcpdog-daemon.js';
 import { ConfigManager } from '../config/config-manager.js';
 import { globalLogManager } from '../logging/server-log-manager.js';
 import { ServerNameValidator } from '../utils/server-name-validator.js';
+import { createExpressAuthMiddleware } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,58 @@ export class DaemonWebServer {
     
     // JSON parsing
     this.app.use(express.json());
+    
+    // Authentication middleware (if token is configured)
+    const authToken = process.env.MCPDOG_AUTH_TOKEN;
+    if (authToken) {
+      console.log('[DAEMON-WEB] Authentication enabled');
+      
+      // Add authentication check endpoint (before auth middleware)
+      this.app.get('/api/auth/status', (req, res) => {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+          return res.json({ authenticated: false, required: true });
+        }
+        
+        const parts = authHeader.split(' ');
+        if (parts.length !== 2 || parts[0] !== 'Bearer') {
+          return res.json({ authenticated: false, required: true });
+        }
+        
+        const token = parts[1];
+        const isAuthorized = Buffer.compare(Buffer.from(token), Buffer.from(authToken)) === 0;
+        
+        if (!isAuthorized) {
+          return res.json({ authenticated: false, required: true });
+        }
+        
+        res.json({ authenticated: true, required: true });
+      });
+      
+      // Add login endpoint (before auth middleware)
+      this.app.post('/api/auth/login', (req, res) => {
+        const { token } = req.body;
+        
+        if (!token) {
+          return res.status(400).json({ error: 'Token is required' });
+        }
+        
+        const isAuthorized = Buffer.compare(Buffer.from(token), Buffer.from(authToken)) === 0;
+        
+        if (!isAuthorized) {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        res.json({ success: true, message: 'Login successful' });
+      });
+      
+      this.app.use(createExpressAuthMiddleware(authToken));
+    } else {
+      // When auth is disabled, return auth not required
+      this.app.get('/api/auth/status', (req, res) => {
+        res.json({ authenticated: true, required: false });
+      });
+    }
     
     // Static file serving
     const staticPath = path.join(__dirname, '../../web/dist');

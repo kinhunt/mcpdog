@@ -17,7 +17,6 @@ export class MCPDogServer extends EventEmitter {
   private clientCapabilities?: ClientCapabilities;
   private isInitialized: boolean = false;
   private requestId: number = 1;
-  private handledRequests: Set<string> = new Set(); // Server-level request deduplication
   private isStarted: boolean = false; // Prevent duplicate starts
 
   constructor(configManager: ConfigManager) {
@@ -349,21 +348,6 @@ export class MCPDogServer extends EventEmitter {
         return await this.handleInitialize(request);
       }
 
-      // For other requests, perform deduplication check (including client ID to support multiple clients)
-      const requestKey = `${clientId || 'unknown'}_${request.method}_${request.id}`;
-      if (this.handledRequests.has(requestKey)) {
-        console.error(`[DEDUP] Duplicate request from client ${clientId}, ignoring: ${request.method} (id: ${request.id})`);
-        // Throw special error to prevent response sending
-        throw new Error('DUPLICATE_REQUEST_IGNORED');
-      }
-      
-      this.handledRequests.add(requestKey);
-      
-      // Clean up old request records
-      if (this.handledRequests.size > 300) {
-        const entries = Array.from(this.handledRequests);
-        entries.slice(0, 150).forEach(key => this.handledRequests.delete(key));
-      }
       
       console.error(`Handling request: ${request.method} (id: ${request.id})`);
 

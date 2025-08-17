@@ -14,14 +14,14 @@ export const ServerListItem: React.FC<ServerListItemProps> = React.memo(({ serve
   return (
     <div
       key={server.name}
-      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors relative ${
-        selectedServer === server.name ? 'bg-blue-50' : ''
+      className={`p-4 cursor-pointer hover:bg-base-200 transition-colors relative ${
+        selectedServer === server.name ? 'bg-primary/10' : ''
       }`}
       onClick={() => setSelectedServer(server.name)}
     >
       {/* Blue border for selected item */}
       {selectedServer === server.name && (
-        <div className="absolute top-0 right-0 bottom-0 w-1 bg-blue-500"></div>
+        <div className="absolute top-0 right-0 bottom-0 w-1 bg-primary"></div>
       )}
       
       <div className="flex items-center space-x-3 mb-2">
@@ -29,24 +29,24 @@ export const ServerListItem: React.FC<ServerListItemProps> = React.memo(({ serve
           server?.connected ? 'bg-green-500' : 
           server?.enabled ? 'bg-yellow-500' : 'bg-gray-400'
         }`} />
-        <h3 className="font-medium text-gray-900 truncate">{server?.name || 'Unknown'}</h3>
+        <h3 className="font-medium text-base-content truncate">{server?.name || 'Unknown'}</h3>
       </div>
       
-      <div className="text-sm text-gray-500 mb-2">
+      <div className="text-sm text-base-content/70 mb-2">
         {server?.description || 'No description'}
       </div>
       
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
-          <span className={`px-2 py-1 rounded-full font-medium ${
-            server?.transport === 'stdio' ? 'bg-blue-100 text-blue-700' :
-            server?.transport === 'http-sse' ? 'bg-green-100 text-green-700' :
-            'bg-purple-100 text-purple-700'
+          <span className={`badge ${
+            server?.transport === 'stdio' ? 'badge-info' :
+            server?.transport === 'http-sse' ? 'badge-success' :
+            'badge-secondary'
           }`}>
             {server?.transport || 'unknown'}
           </span>
           {server?.enabled && (
-            <span className="text-gray-500">
+            <span className="text-base-content/70">
               {server?.connected 
                 ? `${server?.enabledToolCount || 0}/${server?.toolCount || 0} tools`
                 : `${server?.toolCount || 0} tools`
@@ -55,10 +55,10 @@ export const ServerListItem: React.FC<ServerListItemProps> = React.memo(({ serve
           )}
         </div>
         
-        <span className={`px-2 py-1 rounded-full font-medium ${
-          server?.connected ? 'bg-green-100 text-green-700' :
-          server?.enabled ? 'bg-yellow-100 text-yellow-700' :
-          'bg-gray-100 text-gray-700'
+        <span className={`badge ${
+          server?.connected ? 'badge-success' :
+          server?.enabled ? 'badge-warning' :
+          'badge-neutral'
         }`}>
           {server?.connected ? 'Connected' : 
            server?.enabled ? 'Waiting' : 'Disabled'}

@@ -3,19 +3,27 @@ import { EventEmitter } from 'events';
 import { MCPDogServer } from './core/mcpdog-server.js';
 import { MCPMessage, MCPNotification, MCPNotificationRequest, MCPResponse, MCPRequest } from './types/index.js';
 import { ConfigManager } from './config/config-manager.js';
+import { createAuthMiddleware } from './middleware/auth.js';
 
 export class StreamableHttpMCPServer extends EventEmitter {
   private server: MCPDogServer;
   private httpServer: any;
   private port: number;
-  private processedRequests: Set<string> = new Set();
-  private sentResponses: Set<string> = new Set();
+  private authToken?: string;
+  private authMiddleware?: (req: IncomingMessage, res: ServerResponse, next: () => void) => void;
 
-  constructor(configManager: ConfigManager, port: number = 4000) {
+  constructor(configManager: ConfigManager, port: number = 4000, authToken?: string) {
     super();
-    console.error(`[HTTP] Creating StreamableHttpMCPServer instance on port ${port}`);
+    console.error(`[HTTP] Creating StreamableHttpMCPServer instance on port ${port}${authToken ? ' with authentication' : ''}`);
     this.port = port;
+    this.authToken = authToken;
     this.server = new MCPDogServer(configManager);
+    
+    // Setup auth middleware if token is provided
+    if (this.authToken) {
+      this.authMiddleware = createAuthMiddleware(this.authToken);
+    }
+    
     this.setupServer();
     this.setupHttpServer();
   }
@@ -55,13 +63,13 @@ export class StreamableHttpMCPServer extends EventEmitter {
         return;
       }
 
-      if (req.method === 'POST') {
-        this.handleHttpRequest(req, res);
-      } else if (req.method === 'GET') {
-        this.handleHealthCheck(req, res);
+      // Apply authentication middleware if configured
+      if (this.authMiddleware) {
+        this.authMiddleware(req, res, () => {
+          this.handleAuthenticatedRequest(req, res);
+        });
       } else {
-        res.writeHead(405, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Method not allowed' }));
+        this.handleAuthenticatedRequest(req, res);
       }
     });
 
@@ -76,6 +84,17 @@ export class StreamableHttpMCPServer extends EventEmitter {
       console.error('Uncaught exception:', error);
       this.shutdown();
     });
+  }
+
+  private handleAuthenticatedRequest(req: IncomingMessage, res: ServerResponse): void {
+    if (req.method === 'POST') {
+      this.handleHttpRequest(req, res);
+    } else if (req.method === 'GET') {
+      this.handleHealthCheck(req, res);
+    } else {
+      res.writeHead(405, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Method not allowed' }));
+    }
   }
 
   private handleHealthCheck(req: IncomingMessage, res: ServerResponse): void {
@@ -118,24 +137,6 @@ export class StreamableHttpMCPServer extends EventEmitter {
 
         // Handle regular requests
         const request = message as MCPRequest;
-        
-        // Generate unique request identifier
-        const requestKey = `${request.method}_${request.id}`;
-        
-        // Check for duplicate requests
-        if (this.processedRequests.has(requestKey)) {
-          console.error(`[HTTP] Duplicate request detected, skipping: ${request.method} (id: ${request.id})`);
-          return;
-        }
-        
-        // Record request to prevent duplicates
-        this.processedRequests.add(requestKey);
-        
-        // Clean up old request records (keep latest 500)
-        if (this.processedRequests.size > 500) {
-          const entries = Array.from(this.processedRequests);
-          entries.slice(0, 250).forEach(key => this.processedRequests.delete(key));
-        }
 
         console.error(`[HTTP] Processing request: ${request.method} (id: ${request.id})`);
         const response = await this.server.handleRequest(request, 'http-client');
@@ -144,11 +145,6 @@ export class StreamableHttpMCPServer extends EventEmitter {
         this.sendMCPResponse(res, response);
 
       } catch (error) {
-        const errorMessage = (error as Error).message;
-        if (errorMessage === 'DUPLICATE_REQUEST_IGNORED') {
-          console.error(`[HTTP] Ignoring duplicate request processing`);
-          return;
-        }
         console.error('[HTTP] Error processing request:', error);
         this.sendErrorResponse(res, 500, 'Internal server error');
       }
@@ -161,23 +157,6 @@ export class StreamableHttpMCPServer extends EventEmitter {
   }
 
   private sendMCPResponse(res: ServerResponse, response: MCPResponse): void {
-    // Check for duplicate responses
-    if ('id' in response && typeof response.id !== 'undefined') {
-      const responseKey = `response_${response.id}`;
-      
-      if (this.sentResponses.has(responseKey)) {
-        console.error(`[HTTP] Duplicate response detected, skipping: id ${response.id}`);
-        return;
-      }
-      
-      this.sentResponses.add(responseKey);
-      
-      // Clean up old response records
-      if (this.sentResponses.size > 200) {
-        const entries = Array.from(this.sentResponses);
-        entries.slice(0, 100).forEach(key => this.sentResponses.delete(key));
-      }
-    }
 
     const responseBody = JSON.stringify(response);
     
