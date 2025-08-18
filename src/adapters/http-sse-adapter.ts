@@ -37,11 +37,12 @@ export class HttpSseAdapter extends EventEmitter implements ServerAdapter {
       throw new Error(`Invalid transport for HttpSseAdapter: ${config.transport}`);
     }
 
-    if (!config.endpoint) {
-      throw new Error('Endpoint is required for http-sse transport');
+    const httpUrl = config.url || config.endpoint;
+    if (!httpUrl) {
+      throw new Error('URL or endpoint is required for http-sse transport');
     }
 
-    this.baseUrl = config.endpoint;
+    this.baseUrl = httpUrl;
     this.sseUrl = config.sseEndpoint || `${this.baseUrl}/sse`;
     
     // Set session mode
@@ -277,11 +278,17 @@ export class HttpSseAdapter extends EventEmitter implements ServerAdapter {
       throw new Error(`Initialize failed: ${response.error.message}`);
     }
 
-    // Send initialized notification
-    await this.sendNotification({
-      jsonrpc: '2.0',
-      method: 'notifications/initialized'
-    });
+    // Send initialized notification (some servers like GitHub Copilot may not support this)
+    try {
+      await this.sendNotification({
+        jsonrpc: '2.0',
+        method: 'notifications/initialized'
+      });
+      console.error(`Sent initialized notification to ${this.name}`);
+    } catch (error) {
+      console.warn(`Failed to send initialized notification to ${this.name} (this is normal for some servers like GitHub Copilot):`, (error as Error).message);
+      // Don't throw error - some servers don't support this notification
+    }
   }
 
 

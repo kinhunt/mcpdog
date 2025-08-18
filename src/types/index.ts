@@ -14,7 +14,8 @@ export interface MCPServerConfig {
   env?: Record<string, string>;
   
   // HTTP 配置
-  endpoint?: string;
+  endpoint?: string; // 保持向后兼容
+  url?: string;      // 新的标准字段名
   apiKey?: string;
   headers?: Record<string, string>;
   

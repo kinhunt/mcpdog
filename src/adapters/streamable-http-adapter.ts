@@ -16,6 +16,7 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
   }> = new Map();
 
   private endpoint: string;
+  private endpointPath: string = '/'; // Path part of the endpoint URL
   private sessionId?: string; // MCP Session ID (optional)
   private sessionMode: 'auto' | 'required' | 'disabled' = 'auto';
 
@@ -28,18 +29,24 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
       throw new Error(`Invalid transport for StreamableHttpAdapter: ${config.transport}`);
     }
 
-    if (!config.endpoint) {
-      throw new Error('Endpoint is required for streamable-http transport');
+    const httpUrl = config.url || config.endpoint;
+    if (!httpUrl) {
+      throw new Error('URL or endpoint is required for streamable-http transport');
     }
 
-    this.endpoint = config.endpoint;
+    this.endpoint = httpUrl;
     
     // Set session mode
     this.sessionMode = (config as any).sessionMode || 'auto';
 
+    // Parse URL to separate base and path
+    const url = new URL(httpUrl);
+    const baseURL = `${url.protocol}//${url.host}`;
+    const endpointPath = url.pathname + url.search + url.hash;
+
     // Create HTTP client
     this.httpClient = axios.create({
-      baseURL: this.endpoint,
+      baseURL: baseURL,
       timeout: config.timeout || 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -49,6 +56,9 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
         ...(config.apiKey && { 'Authorization': `Bearer ${config.apiKey}` })
       }
     });
+
+    // Store the endpoint path for requests
+    this.endpointPath = endpointPath;
   }
 
   async connect(): Promise<void> {
@@ -97,15 +107,15 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
       id: this.getNextRequestId(),
       method: 'initialize',
       params: {
-        protocolVersion: '2025-03-26',
+        protocolVersion: '2024-11-05',
         capabilities: {
           tools: {},
           prompts: {},
           resources: {}
         },
         clientInfo: {
-          name: 'mcpdog',
-          version: '2.0.1'
+          name: 'MCPClient',
+          version: '1.0.0'
         }
       }
     };
@@ -122,11 +132,17 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
       console.error(`Received session ID for ${this.name}: ${this.sessionId}`);
     }
 
-    // Send initialized notification
-    await this.sendNotification({
-      jsonrpc: '2.0',
-      method: 'notifications/initialized'
-    });
+    // Send initialized notification (some servers like GitHub Copilot may not support this)
+    try {
+      await this.sendNotification({
+        jsonrpc: '2.0',
+        method: 'notifications/initialized'
+      });
+      console.error(`Sent initialized notification to ${this.name}`);
+    } catch (error) {
+      console.warn(`Failed to send initialized notification to ${this.name} (this is normal for some servers like GitHub Copilot):`, (error as Error).message);
+      // Don't throw error - some servers don't support this notification
+    }
   }
 
 
@@ -187,8 +203,8 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
           requestHeaders['Mcp-Session-Id'] = this.sessionId;
         }
         
-        // Send HTTP POST request
-        const response = await this.httpClient.post('/', request, {
+        // Send HTTP POST request to the correct endpoint path
+        const response = await this.httpClient.post(this.endpointPath, request, {
           headers: requestHeaders,
           responseType: 'text' // Receive raw text to handle SSE
         });
@@ -218,6 +234,13 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
     }
 
     try {
+      // Extract session ID from response headers (for GitHub Copilot and similar servers)
+      const sessionId = response.headers['mcp-session-id'];
+      if (sessionId) {
+        this.sessionId = sessionId;
+        console.error(`Extracted session ID from response headers for ${this.name}: ${this.sessionId}`);
+      }
+
       const contentType = response.headers['content-type'] || '';
       
       if (contentType.includes('text/event-stream')) {
@@ -316,7 +339,7 @@ export class StreamableHttpAdapter extends EventEmitter implements ServerAdapter
         requestHeaders['Mcp-Session-Id'] = this.sessionId;
       }
       
-      await this.httpClient.post('/', notification, {
+      await this.httpClient.post(this.endpointPath, notification, {
         headers: requestHeaders
       });
     } catch (error) {

@@ -53,16 +53,18 @@ export class AdapterFactory {
 
       case 'http-sse':
       case 'streamable-http':
-        if (!config.endpoint) {
-          errors.push(`Endpoint is required for ${config.transport} transport`);
+        // Support both 'url' (preferred) and 'endpoint' (legacy) fields
+        const httpUrl = config.url || config.endpoint;
+        if (!httpUrl) {
+          errors.push(`URL or endpoint is required for ${config.transport} transport`);
         }
         
         // Validate URL format
-        if (config.endpoint) {
+        if (httpUrl) {
           try {
-            new URL(config.endpoint);
+            new URL(httpUrl);
           } catch {
-            errors.push(`Invalid endpoint URL: ${config.endpoint}`);
+            errors.push(`Invalid URL: ${httpUrl}`);
           }
         }
         break;

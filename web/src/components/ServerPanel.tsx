@@ -262,6 +262,61 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
     }
   };
 
+  // Headers management functions (similar to environment variables)
+  const handleHeaderChange = (index: number, field: 'key' | 'value', newValue: string) => {
+    const currentHeaders = editedConfig.headers || {};
+    const headerEntries = Object.entries(currentHeaders);
+    
+    if (field === 'key') {
+      const oldKey = headerEntries[index]?.[0];
+      const value = headerEntries[index]?.[1] || '';
+      const newHeaders = { ...currentHeaders };
+      
+      // Delete old key
+      if (oldKey) delete newHeaders[oldKey];
+      
+      // Add new key (if valid)
+      if (newValue.trim()) {
+        newHeaders[newValue] = value;
+      }
+      
+      setEditedConfig({ ...editedConfig, headers: newHeaders });
+    } else {
+      const key = headerEntries[index]?.[0];
+      if (key) {
+        setEditedConfig({ 
+          ...editedConfig, 
+          headers: { ...currentHeaders, [key]: newValue } 
+        });
+      }
+    }
+  };
+
+  const addHeader = () => {
+    const currentHeaders = editedConfig.headers || {};
+    // Create a temporary unique key for new header
+    let newKey = 'Header-Name';
+    let counter = 1;
+    while (currentHeaders[newKey]) {
+      newKey = `Header-Name-${counter}`;
+      counter++;
+    }
+    const newHeaders = { ...currentHeaders, [newKey]: '' };
+    setEditedConfig({ ...editedConfig, headers: newHeaders });
+  };
+
+  const removeHeader = (index: number) => {
+    const currentHeaders = editedConfig.headers || {};
+    const headerEntries = Object.entries(currentHeaders);
+    const keyToRemove = headerEntries[index]?.[0];
+    
+    if (keyToRemove) {
+      const newHeaders = { ...currentHeaders };
+      delete newHeaders[keyToRemove];
+      setEditedConfig({ ...editedConfig, headers: Object.keys(newHeaders).length > 0 ? newHeaders : undefined });
+    }
+  };
+
   const handleRemoveServer = async () => {
     if (!confirm(`Are you sure you want to remove server "${server?.name}"?`)) {
       return;
@@ -284,8 +339,15 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
       <div className="flex items-center justify-between p-6 border-b border-base-300 bg-base-100">
         <div className="flex items-center space-x-4">
           <div>
-            <h2 className="text-xl font-bold text-base-content">
+            <h2 className="text-xl font-bold text-base-content flex items-center gap-3">
               {server?.name}
+              <span className={`badge ${
+                server?.transport === 'stdio' ? 'badge-info' :
+                server?.transport === 'http-sse' ? 'badge-success' :
+                'badge-secondary'
+              }`}>
+                {server?.transport || 'unknown'}
+              </span>
             </h2>
             <p className="text-sm text-base-content/70 mt-1">
               {server?.description || 'No description'}
@@ -520,18 +582,67 @@ export const ServerPanel: React.FC<ServerPanelProps> = ({ server, refreshServerT
                       </div>
                     </div>
                   ) : (
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Endpoint URL</span>
-                      </label>
-                      <input
-                        type="url"
-                        value={editedConfig.endpoint || ''}
-                        onChange={(e) => handleInputChange('endpoint', e.target.value)}
-                        disabled={!isEditing}
-                        className="input input-bordered w-full"
-                        placeholder="e.g.: https://api.example.com/mcp"
-                      />
+                    <div className="space-y-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">URL</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={editedConfig.url || editedConfig.endpoint || ''}
+                          onChange={(e) => handleInputChange('url', e.target.value)}
+                          disabled={!isEditing}
+                          className="input input-bordered w-full"
+                          placeholder="e.g.: https://api.example.com/mcp"
+                        />
+                      </div>
+                      
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Headers</span>
+                        </label>
+                        <div className="space-y-2">
+                          {Object.entries(editedConfig.headers || {}).map(([key, value], index) => (
+                            <div key={index} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={key}
+                                onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                                disabled={!isEditing}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Header name"
+                              />
+                              <input
+                                type="text"
+                                value={value as string}
+                                onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                                disabled={!isEditing}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Header value"
+                              />
+                              {isEditing && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeHeader(index)}
+                                  className="btn btn-ghost btn-sm btn-square text-error"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {isEditing && (
+                            <button
+                              type="button"
+                              onClick={addHeader}
+                              className="btn btn-ghost btn-sm text-primary"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Header
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

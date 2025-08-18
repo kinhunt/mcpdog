@@ -24,7 +24,8 @@ export interface ServerConfig {
   args?: string[];
   cwd?: string;
   env?: Record<string, string>;
-  endpoint?: string;
+  endpoint?: string; // 保持向后兼容
+  url?: string;      // 新的标准字段名  
   apiKey?: string;
   headers?: Record<string, string>;
   

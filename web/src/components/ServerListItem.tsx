@@ -38,13 +38,6 @@ export const ServerListItem: React.FC<ServerListItemProps> = React.memo(({ serve
       
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
-          <span className={`badge ${
-            server?.transport === 'stdio' ? 'badge-info' :
-            server?.transport === 'http-sse' ? 'badge-success' :
-            'badge-secondary'
-          }`}>
-            {server?.transport || 'unknown'}
-          </span>
           {server?.enabled && (
             <span className="text-base-content/70">
               {server?.connected 

@@ -129,8 +129,8 @@ export const AddServerModal: React.FC = () => {
       errors.push(`Server name "${name}": ${nameValidation.error}`);
     }
 
-    if (!config.command && !config.endpoint) {
-      errors.push(`Server "${name}" is missing command or endpoint field`);
+    if (!config.command && !config.endpoint && !config.url) {
+      errors.push(`Server "${name}" is missing command or URL field`);
     }
 
     if (config.args && !Array.isArray(config.args)) {
@@ -208,6 +208,58 @@ export const AddServerModal: React.FC = () => {
     }
   };
 
+  // Headers management functions (similar to environment variables)
+  const handleHeaderChange = (index: number, field: 'key' | 'value', newValue: string) => {
+    const currentHeaders = serverConfig.headers || {};
+    const headerEntries = Object.entries(currentHeaders);
+    
+    if (field === 'key') {
+      const oldKey = headerEntries[index]?.[0];
+      const value = headerEntries[index]?.[1] || '';
+      const newHeaders = { ...currentHeaders };
+      
+      // Delete old key
+      if (oldKey) delete newHeaders[oldKey];
+      
+      // Add new key (if valid)
+      if (newValue.trim()) {
+        newHeaders[newValue] = value;
+      }
+      
+      handleConfigChange('headers', newHeaders);
+    } else {
+      const key = headerEntries[index]?.[0];
+      if (key) {
+        handleConfigChange('headers', { ...currentHeaders, [key]: newValue });
+      }
+    }
+  };
+
+  const addHeader = () => {
+    const currentHeaders = serverConfig.headers || {};
+    // Create a temporary unique key for new header
+    let newKey = 'Header-Name';
+    let counter = 1;
+    while (currentHeaders[newKey]) {
+      newKey = `Header-Name-${counter}`;
+      counter++;
+    }
+    const newHeaders = { ...currentHeaders, [newKey]: '' };
+    handleConfigChange('headers', newHeaders);
+  };
+
+  const removeHeader = (index: number) => {
+    const currentHeaders = serverConfig.headers || {};
+    const headerEntries = Object.entries(currentHeaders);
+    const keyToRemove = headerEntries[index]?.[0];
+    
+    if (keyToRemove) {
+      const newHeaders = { ...currentHeaders };
+      delete newHeaders[keyToRemove];
+      handleConfigChange('headers', Object.keys(newHeaders).length > 0 ? newHeaders : undefined);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -253,7 +305,23 @@ export const AddServerModal: React.FC = () => {
         for (const { name, config } of parsedServers) {
           // Ensure all required fields exist, including transport
           // Prioritize user-specified transport, otherwise infer from configuration
-          const transport = config.transport || (config.endpoint ? 'streamable-http' : 'stdio');
+          let transport = config.transport;
+          if (!transport) {
+            if (config.url || config.endpoint) {
+              // Has URL/endpoint field
+              if (config.type === 'sse' || config.transport === 'http-sse') {
+                transport = 'http-sse';
+              } else {
+                transport = 'streamable-http';  // Default HTTP transport
+              }
+            } else if (config.command) {
+              // Has command field
+              transport = 'stdio';
+            } else {
+              // Fallback to stdio if neither URL nor command is specified
+              transport = 'stdio';
+            }
+          }
           const enabled = config.enabled !== undefined ? config.enabled : true;
           
           const finalConfig: any = {
@@ -550,17 +618,60 @@ export const AddServerModal: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div>
-                      <label className="label">
-                        <span className="label-text font-medium">Endpoint URL *</span>
-                      </label>
-                      <input
-                        type="url"
-                        value={serverConfig.endpoint || ''}
-                        onChange={(e) => handleConfigChange('endpoint', e.target.value)}
-                        className="input input-bordered w-full"
-                        placeholder="e.g.: https://api.example.com/mcp"
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <label className="label">
+                          <span className="label-text font-medium">URL *</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={serverConfig.url || serverConfig.endpoint || ''}
+                          onChange={(e) => handleConfigChange('url', e.target.value)}
+                          className="input input-bordered w-full"
+                          placeholder="e.g.: https://api.example.com/mcp"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="label">
+                          <span className="label-text font-medium">Headers</span>
+                        </label>
+                        <div className="space-y-2">
+                          {Object.entries(serverConfig.headers || {}).map(([key, value], index) => (
+                            <div key={index} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={key}
+                                onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Header name"
+                              />
+                              <input
+                                type="text"
+                                value={value as string}
+                                onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                                className="input input-bordered input-sm flex-1"
+                                placeholder="Header value"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeHeader(index)}
+                                className="btn btn-ghost btn-sm btn-square text-error"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={addHeader}
+                            className="btn btn-ghost btn-sm gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Add Header</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

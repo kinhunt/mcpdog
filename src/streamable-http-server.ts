@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { EventEmitter } from 'events';
+import { randomUUID } from 'crypto';
 import { MCPDogServer } from './core/mcpdog-server.js';
 import { MCPMessage, MCPNotification, MCPNotificationRequest, MCPResponse, MCPRequest } from './types/index.js';
 import { ConfigManager } from './config/config-manager.js';
@@ -11,6 +12,13 @@ export class StreamableHttpMCPServer extends EventEmitter {
   private port: number;
   private authToken?: string;
   private authMiddleware?: (req: IncomingMessage, res: ServerResponse, next: () => void) => void;
+  private sessions: Map<string, {
+    id: string;
+    clientId: string;
+    created: Date;
+    lastActivity: Date;
+  }> = new Map();
+  private sessionTimeout: number = 30 * 60 * 1000; // 30 minutes
 
   constructor(configManager: ConfigManager, port: number = 4000, authToken?: string) {
     super();
@@ -55,7 +63,7 @@ export class StreamableHttpMCPServer extends EventEmitter {
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, mcp-session-id');
 
       if (req.method === 'OPTIONS') {
         res.writeHead(200);
@@ -125,10 +133,20 @@ export class StreamableHttpMCPServer extends EventEmitter {
 
         const message = JSON.parse(body) as MCPMessage;
         
+        // Extract session ID from headers
+        const sessionId = req.headers['mcp-session-id'] as string;
+        
         // Check if it's a notification message (no id field)
         if (!('id' in message)) {
           const notification = message as MCPNotificationRequest;
           console.error(`[HTTP] Handling notification: ${notification.method}`);
+          
+          // Validate session for non-initialize notifications
+          if (sessionId && !this.validateSession(sessionId)) {
+            this.sendErrorResponse(res, 401, 'Invalid or expired session');
+            return;
+          }
+          
           // Notifications get 204 No Content response
           res.writeHead(204);
           res.end();
@@ -139,7 +157,41 @@ export class StreamableHttpMCPServer extends EventEmitter {
         const request = message as MCPRequest;
 
         console.error(`[HTTP] Processing request: ${request.method} (id: ${request.id})`);
-        const response = await this.server.handleRequest(request, 'http-client');
+        
+        // Handle initialize request - create new session
+        if (request.method === 'initialize') {
+          const response = await this.server.handleRequest(request, 'http-client');
+          
+          if (!response.error) {
+            // Create new session
+            const newSessionId = this.createSession(req.socket?.remoteAddress || 'unknown');
+            console.error(`[HTTP] Created new session: ${newSessionId}`);
+            
+            // Add session ID to response headers
+            res.setHeader('mcp-session-id', newSessionId);
+            
+            this.sendMCPResponse(res, response);
+          } else {
+            this.sendMCPResponse(res, response);
+          }
+          return;
+        }
+        
+        // For non-initialize requests, validate session
+        if (!sessionId) {
+          this.sendErrorResponse(res, 400, 'Missing mcp-session-id header');
+          return;
+        }
+        
+        if (!this.validateSession(sessionId)) {
+          this.sendErrorResponse(res, 401, 'Invalid or expired session');
+          return;
+        }
+        
+        // Update session activity
+        this.updateSessionActivity(sessionId);
+        
+        const response = await this.server.handleRequest(request, sessionId);
         console.error(`[HTTP] Sending response for: ${request.method} (id: ${request.id})`);
         
         this.sendMCPResponse(res, response);
@@ -199,10 +251,65 @@ export class StreamableHttpMCPServer extends EventEmitter {
     }));
   }
 
+  private createSession(clientId: string): string {
+    const sessionId = randomUUID();
+    const now = new Date();
+    
+    this.sessions.set(sessionId, {
+      id: sessionId,
+      clientId: clientId,
+      created: now,
+      lastActivity: now
+    });
+    
+    return sessionId;
+  }
+  
+  private validateSession(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return false;
+    }
+    
+    // Check if session has expired
+    const now = new Date();
+    if (now.getTime() - session.lastActivity.getTime() > this.sessionTimeout) {
+      this.sessions.delete(sessionId);
+      return false;
+    }
+    
+    return true;
+  }
+  
+  private updateSessionActivity(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.lastActivity = new Date();
+    }
+  }
+  
+  private cleanupExpiredSessions(): void {
+    const now = new Date();
+    for (const [sessionId, session] of this.sessions) {
+      if (now.getTime() - session.lastActivity.getTime() > this.sessionTimeout) {
+        console.error(`[HTTP] Cleaning up expired session: ${sessionId}`);
+        this.sessions.delete(sessionId);
+      }
+    }
+  }
+
   async start(): Promise<void> {
     try {
       console.error(`[HTTP] Starting StreamableHttpMCPServer...`);
       await this.server.start();
+      
+      // Start session cleanup timer
+      const cleanupInterval = setInterval(() => {
+        this.cleanupExpiredSessions();
+      }, 5 * 60 * 1000); // Clean up every 5 minutes
+      
+      // Store cleanup interval for shutdown
+      (this as any).cleanupInterval = cleanupInterval;
       
       return new Promise<void>((resolve, reject) => {
         this.httpServer.listen(this.port, (error?: Error) => {
@@ -212,6 +319,7 @@ export class StreamableHttpMCPServer extends EventEmitter {
             console.error(`[HTTP] StreamableHttpMCPServer started successfully on port ${this.port}`);
             console.error(`[HTTP] Health check endpoint: http://localhost:${this.port}/`);
             console.error(`[HTTP] MCP endpoint: POST http://localhost:${this.port}/`);
+            console.error(`[HTTP] Session management enabled with ${this.sessionTimeout / 1000}s timeout`);
             resolve();
           }
         });
@@ -226,6 +334,14 @@ export class StreamableHttpMCPServer extends EventEmitter {
     console.error('Shutting down StreamableHttpMCPServer...');
     
     try {
+      // Clean up session cleanup timer
+      if ((this as any).cleanupInterval) {
+        clearInterval((this as any).cleanupInterval);
+      }
+      
+      // Clear all sessions
+      this.sessions.clear();
+      
       if (this.httpServer) {
         await new Promise<void>((resolve) => {
           this.httpServer.close(() => {
