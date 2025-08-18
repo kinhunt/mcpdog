@@ -1,9 +1,0 @@
-{   
-"mcpServers": {
-         "mcpdog": {
-           "command": "/Users/qiujianheng/Documents/dev/mcpdog/start-mcpdog.sh"
-         }
-       }
-
-     }
-
