@@ -26,7 +26,7 @@ MCPDog is a powerful MCP (Model Context Protocol) server manager that allows you
           │                      │                      │
     ┌─────▼─────┐         ┌──────▼──────┐         ┌─────▼─────┐
     │MCP Server:│         │ MCP Server: │         │MCP Server:│
-    │Playwright │         │ Filesystem  │         │ Puppeteer │
+    │  GitHub   │         │   Memory    │         │ Puppeteer │
     └───────────┘         └─────────────┘         └───────────┘
 ```
 
@@ -56,26 +56,6 @@ MCPDog acts as a **proxy layer** that combines multiple MCP servers into one uni
 - **🔧 Easy Management** - Add, remove, and configure servers via CLI or web
 - **📊 Real-time Monitoring** - See server status and tool availability in real-time
 - **🌍 Multiple Transports** - Support for both stdio and HTTP-based communication
-
-## ⚡ New: HTTP Transport Support
-
-MCPDog now supports HTTP-based communication in addition to the traditional stdio transport! This enables:
-
-- **Web-based MCP clients** to connect directly via HTTP
-- **Remote MCP access** over network
-- **RESTful health checks** and monitoring
-- **CORS-enabled** browser integration
-
-Quick example:
-```bash
-# Start MCPDog with HTTP transport
-npx mcpdog@latest --transport streamable-http --port 4000
-
-# Test with curl
-curl -X POST http://localhost:4000/ \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
-```
 
 ## 🚀 Quick Start
 
@@ -116,12 +96,16 @@ Perfect for local development and personal use. MCPDog runs automatically when y
 
 Run MCPDog in a Docker container for isolated, controlled environments without authentication.
 
-**Step 1:** Start MCPDog container
+**Step 1:** Build and start MCPDog container
 ```bash
+# Build the image
+docker build -t mcpdog .
+
+# Start the container
 docker run -d --name mcpdog \
   -p 3000:3000 -p 4000:4000 \
-  -v ~/.mcpdog:/usr/src/app/.mcpdog \
-  mcpdog/mcpdog:latest
+  -v ~/.mcpdog:/home/appuser/.mcpdog \
+  mcpdog
 ```
 
 **Step 2:** Configure your MCP client to use HTTP transport
@@ -142,17 +126,21 @@ docker run -d --name mcpdog \
 
 ---
 
-### 3. ☁️ **Cloud Deployment** (Multi-Environment)
+### 3. ☁️ **Cloud Deployment**
 
 Deploy MCPDog to the cloud for access across different development environments with authentication.
 
 **Step 1:** Deploy container to cloud with authentication
 ```bash
+# Build the image
+docker build -t mcpdog .
+
+# Deploy to cloud
 docker run -d --name mcpdog-cloud \
   -p 3000:3000 -p 4000:4000 \
   -e MCPDOG_AUTH_TOKEN=your_secure_token_here \
-  -v /path/to/config:/usr/src/app/.mcpdog \
-  mcpdog/mcpdog:latest
+  -v /path/to/config:/home/appuser/.mcpdog \
+  mcpdog
 ```
 
 **Step 2:** Configure your MCP client with authentication
