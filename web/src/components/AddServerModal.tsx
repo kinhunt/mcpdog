@@ -450,9 +450,9 @@ export const AddServerModal: React.FC = () => {
                   className="textarea textarea-bordered w-full font-mono text-sm"
                   placeholder={`{
   "mcpServers": {
-    "playwright": {
+    "memory": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest"]
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
     }
   }
 }`}
