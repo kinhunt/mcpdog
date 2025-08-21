@@ -98,15 +98,21 @@ Run MCPDog in a Docker container for isolated, controlled environments without a
 
 **Step 1:** Build and start MCPDog container
 ```bash
-# Build the image
+# Build the image (this may take a few minutes)
 docker build -t mcpdog .
 
-# Start the container
+# Start the container with proper config mounting
 docker run -d --name mcpdog \
   -p 3000:3000 -p 4000:4000 \
   -v ~/.mcpdog:/home/appuser/.mcpdog \
   mcpdog
+
+# Check container status and logs
+docker ps --filter name=mcpdog
+docker logs -f mcpdog --tail 20
 ```
+
+> **Important**: The container expects the config file at `/home/appuser/.mcpdog/mcpdog.config.json`. The volume mount `-v ~/.mcpdog:/home/appuser/.mcpdog` ensures your local config directory is properly mapped to the container's expected location.
 
 **Step 2:** Configure your MCP client to use HTTP transport
 ```json
