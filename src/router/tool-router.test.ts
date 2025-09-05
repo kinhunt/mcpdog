@@ -87,7 +87,7 @@ describe('ToolRouter', () => {
     expect(allTools).toHaveLength(2);
     
     const toolNames = allTools.map(t => t.name).sort();
-    expect(toolNames).toEqual(['server1:shared_tool', 'server2:shared_tool']);
+    expect(toolNames).toEqual(['server1-shared_tool', 'server2-shared_tool']);
   });
 
   it('should route a tool call to the correct adapter', async () => {

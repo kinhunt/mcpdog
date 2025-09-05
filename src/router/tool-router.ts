@@ -141,13 +141,13 @@ export class ToolRouter extends EventEmitter {
         if (existingRoute) {
           console.warn(`Tool name conflict: ${originalToolName} exists in both ${existingRoute.serverName} and ${serverName}`);
           // Resolve conflict by prefixing with server name
-          prefixedToolName = `${serverName}:${originalToolName}`;
+          prefixedToolName = `${serverName}-${originalToolName}`;
           console.log(`🔧 Resolving conflict: ${originalToolName} -> ${prefixedToolName}`);
           
           // Also prefix the original tool
           const originalRoute = this.toolRoutes.get(originalToolName);
           if (originalRoute) {
-            const originalPrefixedName = `${originalRoute.serverName}:${originalToolName}`;
+            const originalPrefixedName = `${originalRoute.serverName}-${originalToolName}`;
             this.toolRoutes.set(originalPrefixedName, {
               ...originalRoute,
               toolName: originalPrefixedName
@@ -263,7 +263,7 @@ export class ToolRouter extends EventEmitter {
       
       // If there's a conflict, use server name as prefix
       if (toolNameCounts.get(originalToolName)! > 1) {
-        finalToolName = `${serverName}:${originalToolName}`;
+        finalToolName = `${serverName}-${originalToolName}`;
       }
       
       allTools.push({
@@ -340,8 +340,8 @@ export class ToolRouter extends EventEmitter {
       console.error(`Routing tool call: ${toolName} -> ${route.serverName}`);
       
       // Extract the original tool name by removing the server prefix
-      const originalToolName = toolName.includes(':') 
-        ? toolName.split(':').slice(1).join(':')  // Handle nested colons
+      const originalToolName = toolName.includes('-') 
+        ? toolName.split('-').slice(1).join('-')  // Handle nested dashes
         : toolName;
       
       if (originalToolName !== toolName) {
