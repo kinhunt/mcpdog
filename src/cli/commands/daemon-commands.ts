@@ -102,7 +102,7 @@ export class DaemonCommands {
 
       // If web-port is not specified, default to starting web server with auto port detection
       if (!webPort) {
-        webPort = await this.findAvailablePort(3000);
+        webPort = await this.findAvailablePort(38881);
         CLIUtils.info(`Auto-detected available web port: ${webPort}`);
       }
 
@@ -289,7 +289,7 @@ ${CLIUtils.colorize('MCP Servers:', 'cyan')}`);
 
     console.log(`
 ${CLIUtils.colorize('Management:', 'cyan')}
-  🌐 Web interface: Check with 'mcpdog start --web-port 3000'
+  🌐 Web interface: Check with 'mcpdog start --web-port 38881'
   🔄 Reload config: mcpdog daemon reload
   🛑 Stop daemon: mcpdog stop
 `);
@@ -317,7 +317,7 @@ ${CLIUtils.colorize('Possible Solutions:', 'yellow')}
      mcpdog status --daemon-port 9998
 
 ${CLIUtils.colorize('Quick Start:', 'cyan')}
-  mcpdog start --config simple-config.json --web-port 3000
+  mcpdog start --config simple-config.json --web-port 38881
 `);
     process.exit(1);
   }

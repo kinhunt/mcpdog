@@ -533,7 +533,7 @@ This wizard will help you create a new MCPDog configuration file.
       servers: {} as Record<string, MCPServerConfig>,
       web: {
         enabled: false,
-        port: 3000,
+        port: 38881,
         host: 'localhost'
       },
       logging: {
@@ -549,9 +549,9 @@ ${CLIUtils.colorize('Step 1: Basic Configuration', 'yellow')}
     const enableWeb = await this.askQuestion('Enable web management interface? (Y/n): ');
     if (!enableWeb.toLowerCase().startsWith('n')) {
       config.web.enabled = true;
-      const webPort = await this.askQuestion(`Web interface port (default: 3000): `);
+      const webPort = await this.askQuestion(`Web interface port (default: 38881): `);
       if (webPort.trim()) {
-        config.web.port = parseInt(webPort) || 3000;
+        config.web.port = parseInt(webPort) || 38881;
       }
     }
 
@@ -1000,14 +1000,14 @@ ${CLIUtils.colorize('Summary:', 'cyan')}
     }
 
     if (webConfig.enabled) {
-      const port = webConfig.port || 3000;
+      const port = webConfig.port || 38881;
       if (port < 1024 || port > 65535) {
         results.push({
           category: 'Web',
           test: 'Web port range',
           status: 'warning',
           message: `Web port ${port} is outside recommended range`,
-          suggestion: 'Use a port between 3000-8080 for development, or standard HTTP ports for production'
+          suggestion: 'Use a port between 38881-48881 for development, or standard HTTP ports for production'
         });
       } else {
         results.push({

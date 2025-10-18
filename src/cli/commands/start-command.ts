@@ -69,8 +69,8 @@ ${CLIUtils.colorize('Available actions:', 'yellow')}
 
   private parseStartupOptions(options: Record<string, any>): StartupConfig {
     // 支持向后兼容性
-    const dashboardPort = parseInt(options['dashboard-port']) || 
-                         parseInt(options['web-port']) || 3000;
+    const dashboardPort = parseInt(options['dashboard-port']) ||
+                         parseInt(options['web-port']) || 38881;
     const httpPort = parseInt(options['mcp-http-port']) || 4000;
     const daemonPort = parseInt(options['daemon-port']) || 9999;
     const pidFile = options['pid-file'] || path.join(os.homedir(), '.mcpdog', 'mcpdog.pid');
@@ -284,7 +284,7 @@ ${CLIUtils.colorize('Usage:', 'yellow')}
 
 ${CLIUtils.colorize('Options:', 'yellow')}
   -c, --config <path>        Configuration file path (default: ./mcpdog.config.json)
-  --dashboard-port <port>    Dashboard UI port (default: 3000, auto-detected)
+  --dashboard-port <port>    Dashboard UI port (default: 38881, auto-detected)
   --mcp-http-port <port>     HTTP transport port (default: 4000, auto-detected)
   --daemon-port <port>       IPC daemon port (default: 9999)
   --pid-file <path>          PID file location (default: ~/.mcpdog/mcpdog.pid)
@@ -313,7 +313,7 @@ ${CLIUtils.colorize('Examples:', 'yellow')}
 ${CLIUtils.colorize('After starting:', 'yellow')}
   • MCP Clients: Use 'npx mcpdog@latest' in client config
   • HTTP Clients: Connect to http://localhost:4000
-  • Management: Visit http://localhost:3000
+  • Management: Visit http://localhost:38881
   • Stop: mcpdog stop
 `);
   }

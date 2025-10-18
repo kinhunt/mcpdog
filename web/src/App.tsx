@@ -16,7 +16,7 @@ function App() {
   }>({ loading: true, authenticated: false, required: false });
   
   // 连接WebSocket并获取刷新功能
-  const { refreshServerTools } = useWebSocket(process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : window.location.origin);
+  const { refreshServerTools } = useWebSocket(process.env.NODE_ENV === 'development' ? 'http://localhost:38881' : window.location.origin);
 
   // Check authentication status on app load
   useEffect(() => {

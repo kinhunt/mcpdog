@@ -84,7 +84,7 @@ Perfect for local development and personal use. MCPDog runs automatically when y
 ```
 
 **Step 2:** Open dashboard to add MCP servers
-- Visit `http://localhost:3000` when MCPDog is running
+- Visit `http://localhost:38881` when MCPDog is running
 - Use the web interface to add and configure your MCP servers
 - Configuration saved to `~/.mcpdog/mcpdog.config.json`
 
@@ -103,7 +103,7 @@ docker build -t mcpdog .
 
 # Start the container with proper config mounting
 docker run -d --name mcpdog \
-  -p 3000:3000 -p 4000:4000 \
+  -p 38881:38881 -p 4000:4000 \
   -v ~/.mcpdog:/home/appuser/.mcpdog \
   mcpdog
 
@@ -127,7 +127,7 @@ docker logs -f mcpdog --tail 20
 ```
 
 **Step 3:** Manage via web dashboard
-- Visit `http://localhost:3000` to configure servers
+- Visit `http://localhost:38881` to configure servers
 - No authentication required for local Docker setup
 
 ---
@@ -143,7 +143,7 @@ docker build -t mcpdog .
 
 # Deploy to cloud
 docker run -d --name mcpdog-cloud \
-  -p 3000:3000 -p 4000:4000 \
+  -p 38881:38881 -p 4000:4000 \
   -e MCPDOG_AUTH_TOKEN=your_secure_token_here \
   -v /path/to/config:/home/appuser/.mcpdog \
   mcpdog
@@ -165,7 +165,7 @@ docker run -d --name mcpdog-cloud \
 ```
 
 **Step 3:** Access authenticated web dashboard
-- Visit `https://your-cloud-domain.com:3000` 
+- Visit `https://your-cloud-domain.com:38881`
 - Login with your authentication token
 - Manage servers across all your development environments
 
@@ -272,7 +272,7 @@ npx mcpdog@latest diagnose --fix
 npx mcpdog@latest daemon start
 
 # Start with custom web port
-npx mcpdog@latest daemon start --web-port 3000
+npx mcpdog@latest daemon start --web-port 38881
 
 # Start in background
 npx mcpdog@latest daemon start --background
@@ -301,8 +301,8 @@ The web dashboard provides a visual interface for managing your MCP servers:
 - **Client Config Generator** - Generate configurations for your MCP client
 
 ### Access Dashboard
-1. Start the daemon: `npx mcpdog@latest daemon start --web-port 3000`
-2. Open `http://localhost:3000` in your browser
+1. Start the daemon: `npx mcpdog@latest daemon start --web-port 38881`
+2. Open `http://localhost:38881` in your browser
 3. Manage your servers visually
 
 > **Note**: The daemon will continue running in the background. To stop it, use `npx mcpdog@latest daemon stop`.

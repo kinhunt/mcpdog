@@ -4,7 +4,7 @@ class APIClient {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : window.location.origin;
+    this.baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:38881' : window.location.origin;
   }
 
   private getAuthHeaders(): HeadersInit {

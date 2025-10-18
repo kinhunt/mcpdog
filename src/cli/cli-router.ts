@@ -169,12 +169,12 @@ ${CLIUtils.colorize('Subcommands:', 'yellow')}
 
 ${CLIUtils.colorize('Start Options:', 'yellow')}
   --daemon-port <port>    IPC port (default: 9999)
-  --web-port <port>       Web interface port (auto-detected from 3000 if not specified)
+  --web-port <port>       Web interface port (auto-detected from 38881 if not specified)
   --pid-file <path>       PID file path
 
 ${CLIUtils.colorize('Examples:', 'yellow')}
   mcpdog daemon start                    # Start daemon with auto-detected web port
-  mcpdog daemon start --web-port 3000    # Start daemon with specific web port
+  mcpdog daemon start --web-port 38881    # Start daemon with specific web port
   mcpdog daemon status                   # View status
   mcpdog daemon reload                   # Reload config
   mcpdog daemon stop                     # Stop daemon
