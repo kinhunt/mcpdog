@@ -338,12 +338,14 @@ export class ToolRouter extends EventEmitter {
 
     try {
       console.error(`Routing tool call: ${toolName} -> ${route.serverName}`);
-      
-      // Extract the original tool name by removing the server prefix
-      const originalToolName = toolName.includes('-') 
-        ? toolName.split('-').slice(1).join('-')  // Handle nested dashes
+
+      // Extract the original tool name by removing the server prefix (if it was added)
+      // Only strip prefix if the tool name starts with "serverName-"
+      const serverPrefix = `${route.serverName}-`;
+      const originalToolName = toolName.startsWith(serverPrefix)
+        ? toolName.substring(serverPrefix.length)
         : toolName;
-      
+
       if (originalToolName !== toolName) {
         console.error(`Stripping prefix: ${toolName} -> ${originalToolName}`);
       }
